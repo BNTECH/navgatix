@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using satguruApp.Service.Services.Interfaces;
 using satguruApp.Service.ViewModels;
@@ -12,9 +13,12 @@ namespace navgatix.Controllers
     {
         private readonly ICommonTypeService _commonTypeService;
 
-        public CommonTypeController(ICommonTypeService commonTypeService)
+        private readonly IWebHostEnvironment _env;
+
+        public CommonTypeController(ICommonTypeService commonTypeService, IWebHostEnvironment env)
         {
             _commonTypeService = commonTypeService;
+            _env = env;
         }
 
         [HttpGet("getall")]
