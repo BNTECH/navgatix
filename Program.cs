@@ -11,7 +11,6 @@ namespace navgatix
 {
     public class Program
     {
-
         public static void Main(string[] args)
         {
             var builder = CreateWebHostBuilder(args).Build();
