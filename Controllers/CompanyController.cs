@@ -14,122 +14,111 @@ namespace navgatix.Controllers
     public class CompanyController : ControllerBase
     {
         private readonly ICompanyService _Company;
-
-
-
         public CompanyController(ICompanyService Company)
         {
             _Company = Company;
-
-
-
         }
 
 
 
 
 
-        //[HttpGet("listt")]
-        //[ProducesResponseType(200, Type = typeof(List<CompanyViewModel>))]
-        //public IActionResult ListCompany()
-        //{
-        //    CompanyFilterViewModel filter = new CompanyFilterViewModel();
-        //    filter.Page = 0;
-        //    filter.PageSize = 500;
+        [HttpGet("listt")]
+        [ProducesResponseType(200, Type = typeof(List<CompanyViewModel>))]
+        public IActionResult ListCompany()
+        {
+            CompanyFilterViewModel filter = new CompanyFilterViewModel();
+            filter.Page = 0;
+            filter.PageSize = 500;
 
-
-
-        //    var list = _Company.GetCompanyList(filter);
-
-
-
-        //    return Ok(list);
-        //}
+            var list = _Company.GetCompanyList(filter);
+            return Ok(list);
+        }
 
 
 
 
 
-        //[HttpPost(@"list")]
-        ////  [Authorize("CompanyList")]
-        //[ProducesResponseType(200, Type = typeof(List<CompanyFilterViewModel>))]
-        //public IActionResult ListCompany([FromBody] CompanyFilterViewModel filter)
-        //{
-        //    if (filter.Page < 0) { filter.Page = 0; }
-        //    if (filter.PageSize > 500) { filter.PageSize = 500; }
-        //    if (filter.PageSize < 1) { filter.PageSize = 2; }
-        //    var list = _Company.GetCompanyList(filter);
-        //    return Ok(list);
-        //}
+        [HttpPost(@"list")]
+        //  [Authorize("CompanyList")]
+        [ProducesResponseType(200, Type = typeof(List<CompanyFilterViewModel>))]
+        public IActionResult ListCompany([FromBody] CompanyFilterViewModel filter)
+        {
+            if (filter.Page < 0) { filter.Page = 0; }
+            if (filter.PageSize > 500) { filter.PageSize = 500; }
+            if (filter.PageSize < 1) { filter.PageSize = 2; }
+            var list = _Company.GetCompanyList(filter);
+            return Ok(list);
+        }
 
 
 
 
-        //[HttpPost("add")]
-        ////  [Authorize("CompanyAdd")]
-        //[ProducesResponseType(201, Type = typeof(CompanyViewModel))]
-        //[ProducesResponseType(400)]
-        //[ProducesResponseType(403)]
-        //public async Task<IActionResult> AddCompany([FromBody] CompanyViewModel model)
-        //{
-        //    if (!ModelState.IsValid)
-        //    {
-        //        return BadRequest("Errors:" + ModelState.ErrorCount.ToString() + " " + String.Join("\n", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage)));
-        //    }
-        //    model = await _Company.AddCompany(model);
-        //    return Ok(model);
-        //}
+        [HttpPost("add")]
+        //  [Authorize("CompanyAdd")]
+        [ProducesResponseType(201, Type = typeof(CompanyViewModel))]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        public async Task<IActionResult> AddCompany([FromBody] CompanyViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Errors:" + ModelState.ErrorCount.ToString() + " " + String.Join("\n", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage)));
+            }
+            model = await _Company.AddCompany(model);
+            return Ok(model);
+        }
 
-        //[Route("details/{id:int}")]
-        //public async Task<IActionResult> Get(HttpRequestMessage request, int id)
-        //{
+        [Route("details/{id:int}")]
+        public async Task<IActionResult> Get(HttpRequestMessage request, int id)
+        {
 
-        //    CompanyEditViewModel VMModel = await _Company.GetCompanyDetailsById(id);
+            CompanyEditViewModel VMModel = await _Company.GetCompanyDetailsById(id);
 
-        //    return Ok(VMModel);
-        //}
-        //[HttpPut("update")]
-        ////  [Authorize("CompanyUpdate")]
-        //[ProducesResponseType(201, Type = typeof(CompanyViewModel))]
-        //[ProducesResponseType(400)]
-        //[ProducesResponseType(403)]
-        //public async Task<IActionResult> UpdCompany([FromBody] CompanyViewModel model)
-        //{
-        //    if (!ModelState.IsValid)
-        //    {
-        //        return BadRequest("Errors:" + ModelState.ErrorCount.ToString() + " " + String.Join("\n", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage)));
-        //    }
-        //    model = await _Company.UpdCompany(model);
-        //    return Ok(model);
-        //}
-
-
+            return Ok(VMModel);
+        }
+        [HttpPut("update")]
+        //  [Authorize("CompanyUpdate")]
+        [ProducesResponseType(201, Type = typeof(CompanyViewModel))]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        public async Task<IActionResult> UpdCompany([FromBody] CompanyViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Errors:" + ModelState.ErrorCount.ToString() + " " + String.Join("\n", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage)));
+            }
+            model = await _Company.UpdCompany(model);
+            return Ok(model);
+        }
 
 
 
-        //[HttpGet(@"get/{Id:int}")]
-        ////  [Authorize("CompanyUpdate")]
-        //[ProducesResponseType(200, Type = typeof(CompanyViewModel))]
-        //[ProducesResponseType(403)]
-        //[ProducesResponseType(404)]
-        //public async Task<IActionResult> GetCompanyById(int Id)
-        //{
-        //    var rkComp = await _Company.GetCompany(Id);
-        //    return Ok(rkComp);
-        //}
+
+
+        [HttpGet(@"get/{Id:int}")]
+        //  [Authorize("CompanyUpdate")]
+        [ProducesResponseType(200, Type = typeof(CompanyViewModel))]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetCompanyById(int Id)
+        {
+            var rkComp = await _Company.GetCompany(Id);
+            return Ok(rkComp);
+        }
 
 
 
-        //[HttpGet(@"getCompanyDetail/{Id:int}")]
-        ////   [Authorize("CompanyUpdate")]
-        //[ProducesResponseType(200, Type = typeof(CompanyViewModel))]
-        //[ProducesResponseType(403)]
-        //[ProducesResponseType(404)]
-        //public async Task<IActionResult> GetCompanyDetailById(int Id)
-        //{
-        //    var rkComp = await _Company.GetCompanyDetail(Id);
-        //    return Ok(rkComp);
-        //}
+        [HttpGet(@"getCompanyDetail/{Id:int}")]
+        //   [Authorize("CompanyUpdate")]
+        [ProducesResponseType(200, Type = typeof(CompanyViewModel))]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetCompanyDetailById(int Id)
+        {
+            var rkComp = await _Company.GetCompanyDetail(Id);
+            return Ok(rkComp);
+        }
 
 
 
