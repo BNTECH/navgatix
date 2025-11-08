@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Satguru\satguruApp.Service\satguruApp.Service.csproj" />
     <ProjectReference Include="..\satguruApp.Service\satguruApp.Service.csproj" />
   </ItemGroup>
 

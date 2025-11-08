@@ -1,0 +1,23 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace satguruApp.DLL.Models;
+
+public partial class DivisionPayrollCycle
+{
+    public int Id { get; set; }
+
+    public int? DivisionId { get; set; }
+
+    public int? CTPayrollCycleId { get; set; }
+
+    public bool? IsDeleted { get; set; }
+
+    public int? CreatedBy { get; set; }
+
+    public int? UpdatedBy { get; set; }
+
+    public DateTime? CreatedDatetime { get; set; }
+
+    public DateTime? UpdatedDatetime { get; set; }
+}
