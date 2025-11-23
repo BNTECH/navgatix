@@ -69,8 +69,8 @@ namespace navgatix.Controllers
             return Ok(model);
         }
 
-        [Route("details/{id:int}")]
-        public async Task<IActionResult> Get(HttpRequestMessage request, int id)
+        [HttpGet(@"details/{Id:int}")]
+        public async Task<IActionResult> Details(HttpRequestMessage request, int id)
         {
 
             CompanyEditViewModel VMModel = await _Company.GetCompanyDetailsById(id);
