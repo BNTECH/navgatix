@@ -33,7 +33,7 @@ namespace satguruApp.Service.Services
         public async Task<int> SaveChangeAsync(CustomerDetailViewModel customerView)
         {
             var customer = await (from cust in _db.CustomerDetails
-                                  where ((customerView.Id > 0 && cust.Id != customerView.Id) || (customerView.Id == 0) && (cust.CompanyName.ToLower().Trim() == customerView.CompanyName.ToLower().Trim() || cust.GSTNumber == customerView.GSTNumber) && cust.IsDeleted == false)
+                                  where ((customerView.Id > 0 && cust.Id != customerView.Id) || (customerView.Id == 0) && (cust.CompanyName.ToLower().Trim() == customerView.CompanyName.ToLower().Trim() || string.IsNullOrEmpty(customerView.CompanyName) || cust.GSTNumber == customerView.GSTNumber || string.IsNullOrEmpty( customerView.GSTNumber)) && cust.IsDeleted == false)
                                   select cust).FirstOrDefaultAsync();
             if (customer != null)
             {
@@ -42,12 +42,13 @@ namespace satguruApp.Service.Services
             else
             {
                 customer = await (from cust in _db.CustomerDetails
-                                  where (customerView.Id > 0 && cust.Id == customerView.Id && (cust.CompanyName.ToLower().Trim() == customerView.CompanyName.ToLower().Trim() || cust.GSTNumber == customerView.GSTNumber) && cust.IsDeleted == false)
+                                  where (customerView.Id > 0 && cust.Id == customerView.Id && (cust.CompanyName.ToLower().Trim() == customerView.CompanyName.ToLower().Trim() || string.IsNullOrEmpty(customerView.CompanyName) || cust.GSTNumber == customerView.GSTNumber || string.IsNullOrEmpty(customerView.GSTNumber)) && cust.IsDeleted == false)
                                   select cust).FirstOrDefaultAsync();
             }
-            customerView.ModelMapTo(customer);
             if (customer == null)
             {
+                customer = new CustomerDetail();
+                customerView.ModelMapTo(customer);
                 _db.CustomerDetails.Add(customer);
             }
            

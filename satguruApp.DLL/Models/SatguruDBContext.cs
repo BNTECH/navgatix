@@ -1,4 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace satguruApp.DLL.Models
 {
@@ -379,7 +383,7 @@ namespace satguruApp.DLL.Models
             modelBuilder.Entity<CommonType>(entity =>
             {
                 entity
-                    .HasNoKey()
+                    //.HasNoKey()
                     .ToTable("CommonType");
 
                 entity.Property(e => e.Code)

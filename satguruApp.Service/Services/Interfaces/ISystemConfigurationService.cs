@@ -11,7 +11,7 @@ namespace satguruApp.Service.Services.Interfaces
 {
     public interface ISystemConfigurationService : IRepository<SystemConfiguration>
     {
-        public Task<SystemConfigurationViewModel> GetById(int? id, string name = "");
+        public Task<SystemConfigurationViewModel> GetById(int id, string name = "");
         public Task<int> SaveChangeAsync(SystemConfigurationViewModel courseView);
         public Task<int> Delete(int id);
         public Task<List<SystemConfigurationViewModel>> GetAll(string name = "");

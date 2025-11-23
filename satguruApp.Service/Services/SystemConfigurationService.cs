@@ -4,6 +4,10 @@ using satguruApp.Service.Services.Interfaces;
 using satguruApp.Service.ViewModels;
 using Newtonsoft;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using NetTopologySuite.IO;
+using System.Linq;
 namespace satguruApp.Service.Services
 {
     public class SystemConfigurationService : Repository<SystemConfiguration>, ISystemConfigurationService
@@ -11,10 +15,9 @@ namespace satguruApp.Service.Services
         public SystemConfigurationService(SatguruDBContext context) : base(context)
         { }
         private SatguruDBContext _db => (SatguruDBContext)_context;
-        public async Task<SystemConfigurationViewModel> GetById(int? id, string name = "")
+        public async Task<SystemConfigurationViewModel> GetById(int id, string name = "")
         {
-            return await (from conig in _db.SystemConfigurations
-                          where conig.Id == id && conig.IsDeleted == false
+            return await (from conig in _db.SystemConfigurations where conig.Id == id && conig.IsDeleted == false
                           select new SystemConfigurationViewModel
                           {
                               Id = conig.Id,
@@ -29,7 +32,7 @@ namespace satguruApp.Service.Services
         }
         public async Task<int> SaveChangeAsync(SystemConfigurationViewModel model)
         {
-            var data = await _db.SystemConfigurations.Where(x => x.Field.ToLower() == model.Field.ToLower() || x.FieldText.ToLower() == model.FieldText.ToLower()).FirstOrDefaultAsync();
+            var data = await (from x in  _db.SystemConfigurations where x.Field.ToLower() == model.Field.ToLower() || x.FieldText.ToLower() == model.FieldText.ToLower() select x).FirstOrDefaultAsync();
             if (data != null && data.Id != model.Id)
             {
                 return 0;
@@ -53,7 +56,7 @@ namespace satguruApp.Service.Services
         }
         public async Task<int> Delete(int id)
         {
-            var data = await _db.SystemConfigurations.Where(x => x.Id == id).FirstOrDefaultAsync();
+            var data = await (from x in  _db.SystemConfigurations where  x.Id == id select x).FirstOrDefaultAsync();
             data.IsDeleted = !data.IsDeleted;
             return await _db.SaveChangesAsync();
         }

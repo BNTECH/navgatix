@@ -3,6 +3,9 @@ using Azure.Storage.Blobs;
 using Microsoft.WindowsAzure.Storage.Blob;
 using satguruApp.Helpers;
 using System.ComponentModel;
+using System.Threading.Tasks;
+using System.IO;
+using System;
 
 namespace satguruApp.Service.Services
 {
