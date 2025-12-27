@@ -37,7 +37,6 @@ namespace satguruApp.DLL.Models
             modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserLogin<string>>().ToTable("UserLogins");
             modelBuilder.Entity<UserLogin>().HasKey(e => new { e.LoginProvider, e.ProviderKey, e.UserId });
             modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserClaim<string>>().ToTable("AspNetUserClaims");
-           // modelBuilder.Entity<UserDevice>().HasKey(c => new { c.AppUserId, c.Device });
             modelBuilder.Entity<UserRoles>().ToTable("UserRoles");
         }
     }

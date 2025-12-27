@@ -49,7 +49,7 @@ namespace satguruApp.Service.Services
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 PhoneNumber = model.PhoneNumber,
-               // DOB = model.DOB,
+                // DOB = model.DOB,
                 NormalizedEmail = model.Email.ToUpper(),
                 NormalizedUserName = model.UserName.ToUpper(),
                 IsActive = true,
@@ -158,7 +158,7 @@ namespace satguruApp.Service.Services
                     if (!userRoles.Any(x => x.Email == model.Email))
                     {
                         var roleList = new List<string> { model.Name };
-                        //var userRole = await _userManager.AddToRoleAsync(user, model.Name);
+                        var userRole = await _userManager.AddToRoleAsync(user, model.Name);
                     }
                     return $"Added {model.Name} to user {model.Email}.";
                 }
@@ -256,7 +256,7 @@ namespace satguruApp.Service.Services
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 PhoneNumber = model.PhoneNumber,
-              //  DOB = model.DOB,
+                //  DOB = model.DOB,
                 NormalizedEmail = model.Email.ToUpper(),
                 NormalizedUserName = model.UserName.ToUpper(),
             };

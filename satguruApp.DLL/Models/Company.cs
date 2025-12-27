@@ -32,7 +32,7 @@ public partial class Company
     public string? Email2 { get; set; }
 
     public string? PhoneCell { get; set; }
-    
+
     public string? PhoneCell2 { get; set; }
 
     public string? PhoneWork { get; set; }
@@ -114,7 +114,7 @@ public partial class Company
     public string? UEI { get; set; }
 
     public decimal? MaxHoursInWeek { get; set; }
-    
+
     public bool? IsAllowHrsOneTaskPerDay { get; set; }
 
     public string? AccountingName { get; set; }

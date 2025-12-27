@@ -1,5 +1,4 @@
-﻿using NetTopologySuite.Geometries.Implementation;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace satguruApp.DLL.Models;
@@ -11,10 +10,6 @@ public partial class CommonType
     public string? Name { get; set; }
 
     public int? CTID { get; set; }
-
-
-    //"FDSFSDA"
-
 
     public bool? IsDeleted { get; set; }
 
