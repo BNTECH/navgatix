@@ -39,6 +39,8 @@ namespace satguruApp.DLL.Models
         public int? DefaultDivisionID { get; set; }
 
         public string? UserType { get; set; }
+        public string? Discriminator { get; set; }
+        
 
         public string FirstName { get; set; }
 

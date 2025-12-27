@@ -33,7 +33,7 @@ namespace satguruApp.Service.Services
             {
                 if (driverInfo.Id == null || driverInfo.Id == Guid.Empty)
                 {
-                    Driver driver = new Driver();
+                    var driver = new Driver();
                     driver.Id = Guid.NewGuid();
                     driver.TransporterId = driverInfo.TransporterId;
                     driver.UserId = driverInfo.UserId;
