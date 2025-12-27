@@ -11,9 +11,9 @@ namespace satguruApp.Service.ViewModels
     public class CompanyViewModel
     {
         public int Id { get; set; }
-        public string Name { get; set; }
-        public string ShortName { get; set; }
-        public string Descr { get; set; }
+        public string? Name { get; set; }
+        public string? ShortName { get; set; }
+        public string? Descr { get; set; }
         public int? CtindustryId { get; set; }
         public bool IsDeleted { get; set; }
         public int? ParentCompanyId { get; set; }
@@ -21,40 +21,40 @@ namespace satguruApp.Service.ViewModels
         public DateTime CreatedDateTime { get; set; }
         public int? UpdatedBy { get; set; }
         public DateTime? UpdatedDateTime { get; set; }
-        public string Email { get; set; }
-        public string Email2 { get; set; }
-        public string PhoneCell { get; set; }
-        public string PhoneCell2 { get; set; }
-        public string PhoneWork { get; set; }
-        public string PhoneWork2 { get; set; }
-        public string PhoneHome { get; set; }
-        public string PhoneHome2 { get; set; }
-        public string PhoneMain { get; set; }
-        public string PhoneOther { get; set; }
-        public string PhoneOther2 { get; set; }
+        public string? Email { get; set; }
+        public string? Email2 { get; set; }
+        public string? PhoneCell { get; set; }
+        public string? PhoneCell2 { get; set; }
+        public string? PhoneWork { get; set; }
+        public string? PhoneWork2 { get; set; }
+        public string? PhoneHome { get; set; }
+        public string? PhoneHome2 { get; set; }
+        public string? PhoneMain { get; set; }
+        public string? PhoneOther { get; set; }
+        public string? PhoneOther2 { get; set; }
         public int? CttypeId { get; set; }
         public int? CtcategoryId { get; set; }
-        public string Explain { get; set; }
+        public string? Explain { get; set; }
 
 
 
-        public string WebsiteUrl { get; set; }
-        public string Tin { get; set; }
-        public string PanNumber { get; set; }
+        public string? WebsiteUrl { get; set; }
+        public string? Tin { get; set; }
+        public string? PanNumber { get; set; }
         public Nullable<decimal> MaxFringeHoursInWeek { get; set; }
         public Nullable<bool> IsAllowHrsOneTaskPerDay { get; set; }
-        public string Cinno { get; set; }
-        public string StatusReportEmail { get; set; }
-        public string StatusReportName { get; set; }
-        public string AccountManagerEmailAddress { get; set; }
+        public string? Cinno { get; set; }
+        public string? StatusReportEmail { get; set; }
+        public string? StatusReportName { get; set; }
+        public string? AccountManagerEmailAddress { get; set; }
         public int? CtclientTypeId { get; set; }
-        public string UEI { get; set; }
-        public string EinfederalId { get; set; }
-        public Address Address { get; set; }
+        public string? UEI { get; set; }
+        public string? EinfederalId { get; set; }
+        public Address? Address { get; set; }
         public Nullable<int> CTCategoryID { get; set; }
         public Nullable<int> CTIncorporationTypeID { get; set; }
         public Nullable<bool> IsFringeHoursAutoApproval { get; set; }
-        public string Cage { get; set; }
+        public string? Cage { get; set; }
         public Nullable<int> DUNS { get; set; }
         public Address RKUpateTo(Address dbModel)
         {
@@ -88,52 +88,48 @@ namespace satguruApp.Service.ViewModels
         }
     }
 
-
-
     public class PayrollPayCycleList
     {
-        public int id { get; set; }
-        public string name { get; set; }
+        public int? id { get; set; }
+        public string? name { get; set; }
     }
-
-
 
     public class CompanyDetailViewModel
     {
         public int Id { get; set; }
-        public string Name { get; set; }
-        public string ShortName { get; set; }
-        public string Descr { get; set; }
+        public string? Name { get; set; }
+        public string? ShortName { get; set; }
+        public string? Descr { get; set; }
         public int? CtindustryId { get; set; }
         public bool IsDeleted { get; set; }
         public int? ParentCompanyId { get; set; }
-        public string IncorporationName { get; set; }
+        public string? IncorporationName { get; set; }
         public int CreatedBy { get; set; }
         public DateTime CreatedDateTime { get; set; }
         public int? UpdatedBy { get; set; }
         public DateTime? UpdatedDateTime { get; set; }
-        public string Email { get; set; }
-        public string Email2 { get; set; }
-        public string PhoneCell { get; set; }
-        public string PhoneCell2 { get; set; }
-        public string PhoneWork { get; set; }
-        public string PhoneWork2 { get; set; }
-        public string PhoneHome { get; set; }
-        public string PhoneHome2 { get; set; }
-        public string PhoneMain { get; set; }
-        public string PhoneOther { get; set; }
-        public string PhoneOther2 { get; set; }
+        public string? Email { get; set; }
+        public string? Email2 { get; set; }
+        public string? PhoneCell { get; set; }
+        public string? PhoneCell2 { get; set; }
+        public string? PhoneWork { get; set; }
+        public string? PhoneWork2 { get; set; }
+        public string? PhoneHome { get; set; }
+        public string? PhoneHome2 { get; set; }
+        public string? PhoneMain { get; set; }
+        public string? PhoneOther { get; set; }
+        public string? PhoneOther2 { get; set; }
         public int? CttypeId { get; set; }
         public int? CtcategoryId { get; set; }
-        public string WebsiteUrl { get; set; }
-        public string Tin { get; set; }
-        public string PanNumber { get; set; }
-        public string Cinno { get; set; }
-        public string StatusReportEmail { get; set; }
-        public string StatusReportName { get; set; }
-        public string AccountManagerEmailAddress { get; set; }
+        public string? WebsiteUrl { get; set; }
+        public string? Tin { get; set; }
+        public string? PanNumber { get; set; }
+        public string? Cinno { get; set; }
+        public string? StatusReportEmail { get; set; }
+        public string? StatusReportName { get; set; }
+        public string? AccountManagerEmailAddress { get; set; }
         public int? CtclientTypeId { get; set; }
-        public string EinfederalId { get; set; }
+        public string? EinfederalId { get; set; }
         public Dictionary<int, string> CompanyCodes { get; set; }
         public Dictionary<int, string> PayrollCycles { get; set; }
 
@@ -157,9 +153,9 @@ namespace satguruApp.Service.ViewModels
         {
             public int TotalCount { get; set; }
             public bool IsDeleted { get; set; }
-            public string CompanyName { get; set; }
-            public string ShortName { get; set; }
-            public string ParentCompanyName { get; set; }
+            public string? CompanyName { get; set; }
+            public string? ShortName { get; set; }
+            public string? ParentCompanyName { get; set; }
             public bool isClientTypeDivision { get; set; }
             public bool isClientTypeAgencyClient { get; set; }
             public bool isClientTypeVendorSubVendor { get; set; }
@@ -174,16 +170,15 @@ namespace satguruApp.Service.ViewModels
 
 
             //sorting
-            public string SortBy { get; set; }
-            public string SortDir { get; set; }
-            public string CompanyType { get; set; }
+            public string? SortBy { get; set; }
+            public string? SortDir { get; set; }
+            public string? CompanyType { get; set; }
             //filters
-            public string Filter { get; set; }
+            public string? Filter { get; set; }
             public int[] NavIds { get; set; }
             public int Id { get; set; }
         }
     }
-
 
     public class CompanyListViewModel
     {
@@ -203,35 +198,35 @@ namespace satguruApp.Service.ViewModels
 
 
         public int ID { get; set; }
-        public string Name { get; set; }
-        public string ShortName { get; set; }
-        public string Descr { get; set; }
+        public string? Name { get; set; }
+        public string? ShortName { get; set; }
+        public string? Descr { get; set; }
         public Nullable<int> CTIndustryID { get; set; }
         public bool IsDeleted { get; set; }
-        public string Type { get; set; }
+        public string? Type { get; set; }
         public Nullable<int> ParentCompanyID { get; set; }
-        public string ParentCompanyName { get; set; }
+        public string? ParentCompanyName { get; set; }
         public int CreatedBy { get; set; }
         public System.DateTime CreatedDateTime { get; set; }
         public Nullable<int> UpdatedBy { get; set; }
         public Nullable<System.DateTime> UpdatedDateTime { get; set; }
-        public string Email { get; set; }
-        public string Email2 { get; set; }
-        public string PhoneCell { get; set; }
-        public string PhoneWork { get; set; }
-        public string PhoneCell2 { get; set; }
-        public string PhoneWork2 { get; set; }
-        public string PhoneHome { get; set; }
-        public string PhoneHome2 { get; set; }
-        public string Phone_Main { get; set; }
-        public string PhoneOther { get; set; }
-        public string PhoneOther2 { get; set; }
+        public string? Email { get; set; }
+        public string? Email2 { get; set; }
+        public string? PhoneCell { get; set; }
+        public string? PhoneWork { get; set; }
+        public string? PhoneCell2 { get; set; }
+        public string? PhoneWork2 { get; set; }
+        public string? PhoneHome { get; set; }
+        public string? PhoneHome2 { get; set; }
+        public string? Phone_Main { get; set; }
+        public string? PhoneOther { get; set; }
+        public string? PhoneOther2 { get; set; }
         public Nullable<int> CTTypeID { get; set; }
         public Nullable<int> CTCategoryID { get; set; }
-        public string WebsiteUrl { get; set; }
-        public string Error { get; set; }
-        public string StatusReportName { get; set; }
-        public string StatusReportEmail { get; set; }
+        public string? WebsiteUrl { get; set; }
+        public string? Error { get; set; }
+        public string? StatusReportName { get; set; }
+        public string? StatusReportEmail { get; set; }
         public Nullable<int> CTClientTypeID { get; set; }
     }
     public class CompanyEditViewModel
@@ -295,38 +290,38 @@ namespace satguruApp.Service.ViewModels
 
 
         public int ID { get; set; }
-        public string Name { get; set; }
-        public string ShortName { get; set; }
-        public string Descr { get; set; }
+        public string? Name { get; set; }
+        public string? ShortName { get; set; }
+        public string? Descr { get; set; }
         public Nullable<Decimal> NegativeCapHrs { get; set; }
         public Nullable<int> CTIndustryID { get; set; }
-        public string IndustryName { get; set; }
+        public string? IndustryName { get; set; }
         public bool IsDeleted { get; set; }
-        public string IncorporationName { get; set; }
+        public string? IncorporationName { get; set; }
         public Nullable<decimal> MaxFringeHoursInWeek { get; set; }
         public Nullable<int> ParentCompanyID { get; set; }
-        public string ParentCompanyName { get; set; }
+        public string? ParentCompanyName { get; set; }
         public Nullable<bool> IsAllowHrsOneTaskPerDay { get; set; }
         public int CreatedBy { get; set; }
         public System.DateTime CreatedDateTime { get; set; }
         public Nullable<int> UpdatedBy { get; set; }
         public Nullable<System.DateTime> UpdatedDateTime { get; set; }
-        public string Email { get; set; }
-        public string Email2 { get; set; }
+        public string? Email { get; set; }
+        public string? Email2 { get; set; }
         public int FringeHourDayLimit { get; set; }
         public bool IsApproverWeekendCommentRequired { get; set; }
         public bool IsEmployeeOTComment { get; set; }
-        public string PhoneCell { get; set; }
-        public string PhoneWork { get; set; }
-        public string UEI { get; set; }
-        public string Explain { get; set; }
-        public string PhoneCell2 { get; set; }
-        public string PhoneWork2 { get; set; }
-        public string PhoneHome { get; set; }
-        public string PhoneHome2 { get; set; }
-        public string Phone_Main { get; set; }
-        public string PhoneOther { get; set; }
-        public string PhoneOther2 { get; set; }
+        public string? PhoneCell { get; set; }
+        public string? PhoneWork { get; set; }
+        public string? UEI { get; set; }
+        public string? Explain { get; set; }
+        public string? PhoneCell2 { get; set; }
+        public string? PhoneWork2 { get; set; }
+        public string? PhoneHome { get; set; }
+        public string? PhoneHome2 { get; set; }
+        public string? Phone_Main { get; set; }
+        public string? PhoneOther { get; set; }
+        public string? PhoneOther2 { get; set; }
         public Nullable<bool> IsApproverOTComment { get; set; }
         public Nullable<bool> IsNWHoursComment { get; set; }
         public Nullable<bool> IsWeekendHourComment { get; set; }
@@ -336,32 +331,32 @@ namespace satguruApp.Service.ViewModels
         public Nullable<int> CTTypeID { get; set; }
         public Nullable<int> CurrencyID { get; set; }
         public Nullable<bool> IsNotSubmitPrevTS { get; set; }
-        public string NotSubmitPrevTS { get; set; }
+        public string? NotSubmitPrevTS { get; set; }
         public Nullable<bool> IsMaxFringHours { get; set; }
-        public string MaxFringHours { get; set; }
+        public string? MaxFringHours { get; set; }
         public Nullable<int> CTCategoryID { get; set; }
         public Nullable<int> CTClientTypeID { get; set; }
         public Nullable<int> CTIncorporationTypeID { get; set; }
         public Nullable<int> CTInvoiceCycleID { get; set; }
         public Nullable<int> CTPaymentTermsID { get; set; }
         public Nullable<int> MailTemplateID { get; set; }
-        public string WebsiteUrl { get; set; }
-        public string EINFederalID { get; set; }
-        public string Error { get; set; }
+        public string? WebsiteUrl { get; set; }
+        public string? EINFederalID { get; set; }
+        public string? Error { get; set; }
         public bool IsExist { get; set; }
-        public string TIN { get; set; }
-        public string PanNumber { get; set; }
-        public string CINNo { get; set; }
-        public string StatusReportName { get; set; }
-        public string StatusReportEmail { get; set; }
-        public string AccountManagerEmailAddress { get; set; }
-        public string ClientTypeValue { get; set; }
+        public string? TIN { get; set; }
+        public string? PanNumber { get; set; }
+        public string? CINNo { get; set; }
+        public string? StatusReportName { get; set; }
+        public string? StatusReportEmail { get; set; }
+        public string? AccountManagerEmailAddress { get; set; }
+        public string? ClientTypeValue { get; set; }
         public List<PayrollPayCycleList> PayrollCycles { get; set; }
-        public string PayrollCyclesName { get; set; }
-        public string CompanyCodesName { get; set; }
+        public string? PayrollCyclesName { get; set; }
+        public string? CompanyCodesName { get; set; }
         public List<PayrollPayCycleList> CompanyCodes { get; set; }
         public Nullable<bool> IsFringeHoursAutoApproval { get; set; }
-        public string Cage { get; set; }
+        public string? Cage { get; set; }
         public Nullable<int> DUNS { get; set; }
         public void RKMapTo(Company company)
         {

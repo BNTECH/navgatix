@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using static satguruApp.Service.ViewModels.CompanyDetailViewModel;
+using Microsoft.AspNetCore.Authorization;
 
 namespace navgatix.Controllers
 {
@@ -24,7 +25,8 @@ namespace navgatix.Controllers
 
 
         [HttpGet("listt")]
-        [ProducesResponseType(200, Type = typeof(List<CompanyViewModel>))]
+       // [ProducesResponseType(200, Type = typeof(List<CompanyViewModel>))]
+        [AllowAnonymous]
         public IActionResult ListCompany()
         {
             CompanyFilterViewModel filter = new CompanyFilterViewModel();
@@ -34,10 +36,6 @@ namespace navgatix.Controllers
             var list = _Company.GetCompanyList(filter);
             return Ok(list);
         }
-
-
-
-
 
         [HttpPost(@"list")]
         //  [Authorize("CompanyList")]

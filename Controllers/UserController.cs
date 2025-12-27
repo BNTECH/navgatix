@@ -80,6 +80,28 @@ namespace navgatix.Controllers
             }
             return Ok(model);
         }
+        [HttpPost("updateDriverDetail")]
+        [AllowAnonymous]
+        public async Task<IActionResult> UpdateDriveDetail([FromBody] DriverViewModel model)
+        {
+            var result = await _transportService.SaveDriverAsync(model);
+            return Ok(result);
+        }
+        [HttpPost("updateTransporterDetail")]
+        [AllowAnonymous]
+        public async Task<IActionResult> UpdateTransporterDetail([FromBody] TransporterViewModel model)
+        {
+            var result = await _transportService.SaveTransporterAsync(model); return Ok(result);
+        }
+        [HttpPost("updateCustomerDetail")]
+        [AllowAnonymous]
+        public async Task<IActionResult> UpdateCustomerDetail([FromBody] CustomerDetailViewModel model)
+        {
+            var result = _appCustormer.SaveChangeAsync(model);
+            return Ok(result);
+        }
+
+
 
         [HttpPost("createToken")]
         [AllowAnonymous]

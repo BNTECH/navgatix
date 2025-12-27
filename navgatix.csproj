@@ -48,12 +48,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\satguruApp.Service\satguruApp.Service.csproj" />
-    <ProjectReference Include="satguruApp.Service\satguruApp.Service.csproj" />
+    <Folder Include="uploaddocs\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="uploaddocs\" />
+    <ProjectReference Include="satguruApp.Service\satguruApp.Service.csproj" />
   </ItemGroup>
 
 <!--<Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
