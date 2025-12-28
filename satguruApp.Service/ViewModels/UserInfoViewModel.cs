@@ -1,4 +1,5 @@
-﻿using satguruApp.DLL.Models;
+﻿using Microsoft.AspNetCore.Http;
+using satguruApp.DLL.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -55,5 +56,12 @@ namespace satguruApp.Service.ViewModels
         public string? Address { get; set; }
         public string? Pincode { get; set; }
 
+    }
+    public class UserProfilePicViewModel
+    {
+        public int AppUserId { get; set; }
+        public Guid UserId { get; set; }
+        public string? ProfilePic { get; set; }
+        public IFormFile File { get; set; }
     }
 }

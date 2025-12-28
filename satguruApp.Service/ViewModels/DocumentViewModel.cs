@@ -38,22 +38,21 @@ namespace satguruApp.Service.ViewModels
         public int? TableRowId { get; set; }
         public string VehicleNumber { get; set; }
         public string CttableType { get; set; }
-
-
         public string DocType { get; set; }
 
         public string DocumentUrl { get; set; }
 
         public DateTime? ExpiryDate { get; set; }
 
-        public bool? IsDeleted { get; set; }
+        public bool IsDeleted { get; set; }
+        public string? DocKey { get; set; }
 
         public int? CTTableId { get; set; }
 
-        public int? CreatedBy { get; set; }
+        public int CreatedBy { get; set; }
         public IFormFile File { get; set; }
 
-        public DateTime? CreatedDatetime { get; set; }
+        public DateTime CreatedDatetime { get; set; }
 
         public int? UpdatedBy { get; set; }
 

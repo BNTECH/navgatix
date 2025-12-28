@@ -15,7 +15,7 @@ namespace satguruApp.Service.Services
         public UserInfoService(SatguruDBContext context) : base(context)
         { }
         private SatguruDBContext _db => (SatguruDBContext)_context;
-        public async Task<int> SaveAsync(UserInfoViewModel userInfo)
+        public async Task<UserInfoViewModel> SaveAsync(UserInfoViewModel userInfo)
         {
             var gender = await _db.Genders.Where(x => x.Name == userInfo.Gender || x.Id == userInfo.GenderId).FirstOrDefaultAsync();
             if (gender == null && !string.IsNullOrEmpty(userInfo.Gender))
@@ -31,46 +31,57 @@ namespace satguruApp.Service.Services
                 var usrInfo = await _db.UserInformations.Where(x => x.Email == userInfo.Email || x.UserId == userInfo.UserId || x.PhoneNumber == userInfo.PhoneNumber).FirstOrDefaultAsync();
                 if ((userInfo.Id == null || userInfo.Id == Guid.Empty) && usrInfo == null)
                 {
-                    UserInformation userinfo = new UserInformation();
-                    userinfo.Id = Guid.NewGuid();
-                    userinfo.FirstName = userInfo.FirstName;
-                    userinfo.LastName = userInfo.LastName;
-                    userinfo.Email = userInfo.Email;
-                    userinfo.MiddleName = "";
-                    userinfo.Mobile = userInfo.Mobile;
-                    userinfo.PhoneNumber = userInfo.PhoneNumber;
-                    userinfo.FacebookLink = userInfo.FacebookLink;
-                    userinfo.InstagramLink = userInfo.InstagramLink;
-                    userinfo.WhatsAppLink = userInfo.WhatsAppLink;
-                    userinfo.AccountTypeId = userInfo.AccountTypeId;
-                    userinfo.Company = userInfo.Company;
-                    userinfo.DOB = userInfo.DOB;
-                    userinfo.GenderId = userInfo.GenderId;
-                    userinfo.Description = userInfo.Description;
-                    userinfo.ProfilePic = userInfo.ProfilePic;
-                    userinfo.IsDeleted = false;
-                    userinfo.UserId = userInfo.UserId;
-                    _db.UserInformations.Add(userinfo);
+                    usrInfo = new UserInformation();
+                    usrInfo.Id = Guid.NewGuid();
+                    usrInfo.FirstName = userInfo.FirstName;
+                    usrInfo.LastName = userInfo.LastName;
+                    usrInfo.Email = userInfo.Email;
+                    usrInfo.MiddleName = "";
+                    usrInfo.Mobile = userInfo.Mobile;
+                    usrInfo.PhoneNumber = userInfo.PhoneNumber;
+                    usrInfo.FacebookLink = userInfo.FacebookLink;
+                    usrInfo.InstagramLink = userInfo.InstagramLink;
+                    usrInfo.WhatsAppLink = userInfo.WhatsAppLink;
+                    usrInfo.AccountTypeId = userInfo.AccountTypeId;
+                    usrInfo.Company = userInfo.Company;
+                    usrInfo.DOB = userInfo.DOB;
+                    usrInfo.GenderId = userInfo.GenderId;
+                    usrInfo.Description = userInfo.Description;
+                    usrInfo.ProfilePic = userInfo.ProfilePic;
+                    usrInfo.IsDeleted = false;
+                    usrInfo.UserId = userInfo.UserId;
+                    _db.UserInformations.Add(usrInfo);
                 }
                 else
                 {
-                    UserInformation userinfo = await _db.UserInformations.Where(x => x.Id == userInfo.Id || x.Email == userInfo.Email || x.UserId == userInfo.UserId).FirstOrDefaultAsync();
-                    userinfo.FirstName = userinfo.FirstName;
-                    userinfo.LastName = userinfo.LastName;
-                    userinfo.Email = userinfo.Email;
-                    userinfo.MiddleName = userinfo.MiddleName;
-                    userinfo.Mobile = userinfo.Mobile;
-                    userinfo.PhoneNumber = userinfo.PhoneNumber;
-                    userinfo.FacebookLink = userinfo.FacebookLink;
-                    userinfo.InstagramLink = userinfo.InstagramLink;
-                    userinfo.WhatsAppLink = userinfo.WhatsAppLink;
-                    userinfo.AccountTypeId = userinfo.AccountTypeId;
-                    userinfo.Company = userinfo.Company;
-                    userinfo.DOB = userinfo.DOB;
-                    userinfo.GenderId = userinfo.GenderId;
-                    userinfo.IsDeleted = false;
+                    usrInfo = await _db.UserInformations.Where(x => x.Id == userInfo.Id || x.Email == userInfo.Email || x.UserId == userInfo.UserId).FirstOrDefaultAsync();
+                    usrInfo.FirstName = userInfo.FirstName;
+                    usrInfo.LastName = userInfo.LastName;
+                    usrInfo.Email = userInfo.Email;
+                    usrInfo.MiddleName = userInfo.MiddleName;
+                    usrInfo.Mobile = userInfo.Mobile;
+                    usrInfo.PhoneNumber = userInfo.PhoneNumber;
+                    usrInfo.FacebookLink = userInfo.FacebookLink;
+                    usrInfo.InstagramLink = userInfo.InstagramLink;
+                    usrInfo.WhatsAppLink = userInfo.WhatsAppLink;
+                    usrInfo.AccountTypeId = userInfo.AccountTypeId;
+                    usrInfo.Company = userInfo.Company;
+                    usrInfo.DOB = userInfo.DOB;
+                    usrInfo.GenderId = userInfo.GenderId;
+                    usrInfo.IsDeleted = false;
+                    usrInfo.ProfilePic = userInfo.ProfilePic;
                 }
-
+                await _db.SaveChangesAsync();
+                userInfo.Id = usrInfo.Id;
+            }
+            return userInfo;
+        }
+        public async Task<int> UpdateProfilePic(string userId, string profilePic)
+        {
+            var userInfo = await _db.UserInformations.Where(x => x.UserId == userId).FirstOrDefaultAsync();
+            if (userInfo != null)
+            {
+                userInfo.ProfilePic = profilePic;
                 return await _db.SaveChangesAsync();
             }
             return 0;
@@ -118,7 +129,6 @@ namespace satguruApp.Service.Services
 
                 return null;
             }
-
         }
 
         public async Task<List<UserInfoViewModel>> GetUserList(UserSearchViewModel userSearch)

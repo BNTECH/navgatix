@@ -13,13 +13,13 @@ public partial class Document
 
     public DateTime? ExpiryDate { get; set; }
 
-    public bool? IsDeleted { get; set; }
+    public bool IsDeleted { get; set; }
 
     public int? CTTableId { get; set; }
 
-    public int? CreatedBy { get; set; }
+    public int CreatedBy { get; set; }
 
-    public DateTime? CreatedDatetime { get; set; }
+    public DateTime CreatedDatetime { get; set; }
 
     public int? UpdatedBy { get; set; }
 

@@ -9,15 +9,15 @@ public partial class Vehicle
 
     public long? TransporterId { get; set; }
 
-    public string VehicleNumber { get; set; }
+    public string? VehicleNumber { get; set; }
 
-    public string VehicleName { get; set; }
+    public string? VehicleName { get; set; }
 
     public decimal? CapacityTons { get; set; }
 
     public decimal? SizeCubicMeters { get; set; }
 
-    public string RCNumber { get; set; }
+    public string? RCNumber { get; set; }
 
     public DateTime? InsuranceExpiry { get; set; }
 
@@ -29,12 +29,12 @@ public partial class Vehicle
 
     public decimal? CurrentLongitude { get; set; }
 
-    public string UploadPhoneUrl { get; set; }
+    public string? UploadPhoneUrl { get; set; }
 
     public bool? IsAvailable { get; set; }
 
     public bool? IsDeleted { get; set; }
-
+    
     public int? CT_VehicleType { get; set; }
 
     public int? CreatedBy { get; set; }
