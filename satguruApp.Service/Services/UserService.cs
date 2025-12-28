@@ -38,8 +38,6 @@ namespace satguruApp.Service.Services
             _db = context;
             _userClaimFactory = userClaimFactory;
         }
-
-
         public async Task<string> UserRegisterAsync(UserViewModel model) //UserInfoViewModel
         {
             var user = new ApplicationUser

@@ -17,13 +17,13 @@ namespace satguruApp.Service.Services
         private SatguruDBContext _db => (SatguruDBContext)_context;
 
 
-        public async Task<int> SaveVehicleAsync(VehicleViewModel vehicleView)
+        public async Task<VehicleViewModel> SaveVehicleAsync(VehicleViewModel vehicleView)
         {
-            Vehicle vehicleVM = new Vehicle();
-            if (vehicleView.Id == null || vehicleView.Id == Guid.Empty)
+            var vehicleVM = new Vehicle();
+            if (vehicleView.Id == Guid.Empty)
             {
 
-                vehicleVM.Id = Guid.NewGuid();
+                vehicleVM.Id = vehicleView.Id = Guid.NewGuid();
                 vehicleVM.TransporterId = vehicleView.TransporterId;
                 vehicleVM.CurrentLatitude = vehicleView.CurrentLatitude;
                 vehicleVM.RCNumber = vehicleView.RCNumber;
@@ -58,13 +58,18 @@ namespace satguruApp.Service.Services
                 vehicleVM.CTBodyType = vehicleView.CTBodyType;
                 vehicleVM.IsDeleted = false;
             }
-            return await _db.SaveChangesAsync();
+             var saveCnt = await _db.SaveChangesAsync();
+            if (saveCnt > 0)
+                vehicleView.Message = "Success";
+            else
+                vehicleView.Message = "Failed";
+            return vehicleView;
         }
         public async Task<VehicleViewModel> GetVehicleDetails(Guid vehicleId)
         {
             var vehicleVM = await (from vehicle in _db.Vehicles
                                    join trans in _db.TransporterDetails on vehicle.TransporterId equals trans.Id
-                                   join cmn in _db.CommonTypes on vehicle.CT_VehicleType  equals cmn.Id into vType
+                                   join cmn in _db.CommonTypes on vehicle.CT_VehicleType equals cmn.Id into vType
                                    from cmn in vType.DefaultIfEmpty()
                                    join cmnbdy in _db.CommonTypes on vehicle.CTBodyType equals cmnbdy.Id into VbodyType
                                    from cmnbdy in VbodyType.DefaultIfEmpty()
@@ -111,8 +116,9 @@ namespace satguruApp.Service.Services
                 vehicle.IsAvailable = false;
                 _db.Vehicles.Update(vehicle);
                 var bookingExists = await (from x in _db.Bookings
-                                           join comn in _db.CommonTypes on x.CT_BookingStatus  equals comn.Id
-                                           where x.VehicleId == model.VehicleId && x.DriverId == model.DriverId && x.CustomerId == model.CustomerId && comn.Name != "Completed" && comn.Name != "Cancelled" select x).FirstOrDefaultAsync();
+                                           join comn in _db.CommonTypes on x.CT_BookingStatus equals comn.Id
+                                           where x.VehicleId == model.VehicleId && x.DriverId == model.DriverId && x.CustomerId == model.CustomerId && comn.Name != "Completed" && comn.Name != "Cancelled"
+                                           select x).FirstOrDefaultAsync();
                 if (bookingExists == null)
                 {
                     bookingExists = new Booking

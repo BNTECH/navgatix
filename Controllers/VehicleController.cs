@@ -24,11 +24,10 @@ namespace navgatix.Controllers
         public async Task<IActionResult> VehicleRegistration([FromBody] VehicleViewModel model)
         {
             await _vehicleService.SaveVehicleAsync(model);
-
             return Ok(model);
         }
         [AllowAnonymous]
-        [HttpGet("{vehicleId}")]
+        [HttpGet("getVehicle/{vehicleId}")]
         public async Task<IActionResult> GetVehicle(Guid vehicleId)
         {
             return Ok(await _vehicleService.GetVehicleDetails(vehicleId));

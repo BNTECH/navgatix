@@ -34,7 +34,7 @@ namespace navgatix.Controllers
         JSObject systemConfiguration;
         private readonly string _storageConnectionString;
         private readonly string _storageContainerName;
-
+        private string subPath = @"~/uploaddocs/";
         public DocumentController(IDocumentService document
             , IConfiguration iConfig, ImageRepository img, ISystemConfigurationService SystemConfigurationBiz /*, IImportPathRepository _ImportPathRepository*/)
         {
@@ -54,6 +54,107 @@ namespace navgatix.Controllers
         }
 
 
+        [HttpPost("list")]
+        [AllowAnonymous]
+        [ProducesResponseType(200, Type = typeof(List<DocumentViewModel>))]
+        public IActionResult List([FromBody] DocumentViewModel filter)
+        {
+            if (filter.Id == 0)
+            {
+                var list = _documentService.GetDocumentList(filter);
+                return Ok(list);
+            }
+            else
+            {
+                var list = _documentService.GetDocument(filter.Id, filter.DocumentName, filter.DocKey, filter.IsDeleted);
+                return Ok(list);
+            }
+        }
+
+
+
+        [HttpPost("upload")]
+        [AllowAnonymous]
+        [ProducesResponseType(201, Type = typeof(DocumentViewModel))]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        public async Task<IActionResult> Upload(DocumentViewModel documentDetailViewModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Errors:" + ModelState.ErrorCount.ToString() + " " + String.Join("\n", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage)));
+            }
+            try
+            {
+                if (documentDetailViewModel.File == null || documentDetailViewModel.File.Length == 0)
+                    return BadRequest("File is required.");
+
+                // Folder path: wwwroot/uploads
+                var uploadFolder = Path.Combine(subPath);
+
+                if (!Directory.Exists(uploadFolder))
+                    Directory.CreateDirectory(uploadFolder);
+
+                documentDetailViewModel.DocumentExt = Path.GetExtension(documentDetailViewModel.File.FileName);
+                var uniqueFileName = $"{documentDetailViewModel.VehicleId}_{DateTime.Now.Ticks}_{documentDetailViewModel.File.FileName}";
+                var filePath = Path.Combine(uploadFolder, uniqueFileName);
+
+                // Save file
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await documentDetailViewModel.File.CopyToAsync(stream);
+                }
+                documentDetailViewModel.DocumentName = uniqueFileName;
+                documentDetailViewModel.DocumentPath = filePath;
+
+                documentDetailViewModel.DocumentExt = documentDetailViewModel.DocumentExt;
+                documentDetailViewModel.DocStream = null;
+                await _documentService.SaveUpdateDocument(documentDetailViewModel);
+
+
+                //var files = Request.Form.Files;
+                //foreach (var item in files)
+                //{
+                //    var filename = ContentDispositionHeaderValue.Parse(item.ContentDisposition).FileName.Trim('"');
+                //    filename = (filename == "blob") ? documentDetailViewModel.DocumentName : filename;
+                //    using (var memoryStream = new MemoryStream())
+                //    {
+                //        await item.CopyToAsync(memoryStream);
+
+
+
+                //        byte[] bytes = memoryStream.ToArray();
+                //        string ext = item.ContentType;
+                //        var documentName = await _imageRepository.UploadImage(documentDetailViewModel.CttableType, filename, bytes, "." + ext, CDNFolder, CDNAccount, CDNKey);
+
+
+
+                //        //Do whatever you want with filename and its binaray data.
+                //        documentDetailViewModel.DocumentName = filename;
+                //        documentDetailViewModel.DocumentPath = path + documentName;
+                //        documentDetailViewModel.DocumentExt = documentDetailViewModel.DocumentExt != null ? documentDetailViewModel.DocumentExt : filename.Split(".")[1];
+                //        documentDetailViewModel.DocStream = null;
+                //        await _documentService.SaveUpdateDocument(documentDetailViewModel);
+                //    }
+                //}
+            }
+            catch (Exception ex)
+            {
+            }
+            return Ok(documentDetailViewModel);
+        }
+
+
+
+        [HttpPost("delete")]
+        [ProducesResponseType(200, Type = typeof(DocumentViewModel))]
+        public IActionResult Delete([FromBody] DocumentViewModel filter)
+        {
+            var list = _documentService.DeleteDocumentList(filter.Id, filter.IsDeleted);
+            return Ok(list);
+        }
+
+
         [HttpGet("getFile/{id}/{fileName}/{docKey}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetFile(int? id, string fileName, string docKey)
@@ -62,6 +163,13 @@ namespace navgatix.Controllers
             if (id == null) { return Ok("id is null"); }
 
             var provider = new FileExtensionContentTypeProvider();
+            var document = _documentService.GetDocument(id.GetValueOrDefault(), fileName, docKey, false);
+
+            var fullPath = Path.Combine(Directory.GetCurrentDirectory(), subPath, document.DocumentPath);
+            if (!System.IO.File.Exists(fullPath))
+                return NotFound();
+
+            return PhysicalFile(fullPath, "application/octet-stream", document.DocumentName);
 
             //var stream = await
 
@@ -84,7 +192,7 @@ namespace navgatix.Controllers
             //}
 
             //return File(stream, contentType, fileName);
-            return Ok();
+           // return Ok();
 
         }
 
@@ -117,7 +225,7 @@ namespace navgatix.Controllers
 
         {
 
-            documentModel.DocumentName = _documentService.GetDocument(documentModel.Id, documentModel.DocumentName, "", documentModel.IsDeleted.GetValueOrDefault()).DocumentName;
+            documentModel.DocumentName = _documentService.GetDocument(documentModel.Id, documentModel.DocumentName, "", documentModel.IsDeleted).DocumentName;
 
             //var stream = await _imageRepository.DownloadFileAsync(documentModel.DocumentPath, CDNFolder, CDNAccount, CDNKey); ;
 

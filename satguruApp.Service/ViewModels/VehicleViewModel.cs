@@ -66,6 +66,7 @@ namespace satguruApp.Service.ViewModels
         public bool? IsDeleted { get; set; }
         public int? CTBodyType { get; set; }
         public string? BodyTypeName { get; set; }
+        public string? Message { get; set; }
 
         public virtual ICollection<BookingViewModel> Bookings { get; set; } = new List<BookingViewModel>();
 

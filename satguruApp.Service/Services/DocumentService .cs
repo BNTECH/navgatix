@@ -170,7 +170,7 @@ namespace satguruApp.Service.Services
 
                 _doc.CreatedDatetime = DateTime.Now;
 
-               // _doc.CreatedBy = AppUserId;
+                _doc.CreatedBy = AppUserId;
 
                 _db.Documents.Add(_doc);
 
@@ -225,7 +225,7 @@ namespace satguruApp.Service.Services
 
             model.CttableType = "ATL";
 
-            var docs = _db.Documents.Where(x => !x.IsDeleted.GetValueOrDefault() && (extensions.Contains(x.DocumentExt))).OrderByDescending(x => x.IsDefault).FirstOrDefault();
+            var docs = _db.Documents.Where(x => !x.IsDeleted && (extensions.Contains(x.DocumentExt))).OrderByDescending(x => x.IsDefault).FirstOrDefault();
 
             model.Id = docs.Id;
 
