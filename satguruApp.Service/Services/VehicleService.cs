@@ -19,10 +19,10 @@ namespace satguruApp.Service.Services
 
         public async Task<VehicleViewModel> SaveVehicleAsync(VehicleViewModel vehicleView)
         {
-            var vehicleVM = new Vehicle();
-            if (vehicleView.Id == Guid.Empty)
+            var vehicleVM = await (from vehicle in _db.Vehicles where (vehicle.Id == vehicleView.Id || (vehicle.VehicleNumber.ToLower() == vehicleView.VehicleNumber || vehicle.RCNumber.ToLower() == vehicleView.RCNumber.ToLower())) select vehicle).FirstOrDefaultAsync();
+            if (vehicleView.Id == Guid.Empty && vehicleVM == null)
             {
-
+                vehicleVM = new Vehicle();
                 vehicleVM.Id = vehicleView.Id = Guid.NewGuid();
                 vehicleVM.TransporterId = vehicleView.TransporterId;
                 vehicleVM.CurrentLatitude = vehicleView.CurrentLatitude;
@@ -42,7 +42,7 @@ namespace satguruApp.Service.Services
             }
             else
             {
-                vehicleVM = await _db.Vehicles.Where(x => x.Id == vehicleView.Id).FirstOrDefaultAsync();
+                vehicleView.Id = vehicleVM.Id;
                 vehicleVM.TransporterId = vehicleView.TransporterId;
                 vehicleVM.CurrentLatitude = vehicleView.CurrentLatitude;
                 vehicleVM.RCNumber = vehicleView.RCNumber;
@@ -58,7 +58,7 @@ namespace satguruApp.Service.Services
                 vehicleVM.CTBodyType = vehicleView.CTBodyType;
                 vehicleVM.IsDeleted = false;
             }
-             var saveCnt = await _db.SaveChangesAsync();
+            var saveCnt = await _db.SaveChangesAsync();
             if (saveCnt > 0)
                 vehicleView.Message = "Success";
             else
