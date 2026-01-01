@@ -19,46 +19,56 @@ namespace satguruApp.Service.Services
 
         public async Task<VehicleViewModel> SaveVehicleAsync(VehicleViewModel vehicleView)
         {
-            var vehicleVM = new Vehicle();
-            if (vehicleView.Id == Guid.Empty)
+            var saveCnt = 0;
+            try
             {
 
-                vehicleVM.Id = vehicleView.Id = Guid.NewGuid();
-                vehicleVM.TransporterId = vehicleView.TransporterId;
-                vehicleVM.CurrentLatitude = vehicleView.CurrentLatitude;
-                vehicleVM.RCNumber = vehicleView.RCNumber;
-                vehicleVM.CurrentLongitude = vehicleView.CurrentLongitude;
-                vehicleVM.SizeCubicMeters = vehicleView.SizeCubicMeters;
-                vehicleVM.CapacityTons = vehicleView.CapacityTons;
-                vehicleVM.InsuranceExpiry = vehicleView.InsuranceExpiry;
-                vehicleVM.RoadTaxExpiry = vehicleView.RoadTaxExpiry;
-                vehicleVM.IsAvailable = vehicleView.IsAvailable;
-                vehicleVM.UploadPhoneUrl = vehicleView.UploadPhoneUrl;
-                vehicleVM.VehicleNumber = vehicleView.VehicleNumber;
-                vehicleVM.CT_VehicleType = vehicleView.CT_VehicleType;
-                vehicleVM.CTBodyType = vehicleView.CTBodyType;
-                vehicleVM.IsDeleted = false;
-                _db.Vehicles.Add(vehicleVM);
+
+                var vehicleVM = await (from vehicle in _db.Vehicles where (vehicle.Id == vehicleView.Id || (vehicle.VehicleNumber.ToLower() == vehicleView.VehicleNumber || vehicle.RCNumber.ToLower() == vehicleView.RCNumber.ToLower())) select vehicle).FirstOrDefaultAsync();
+                if (vehicleView.Id == Guid.Empty && vehicleVM == null)
+                {
+                    vehicleVM = new Vehicle();
+                    vehicleVM.Id = vehicleView.Id = Guid.NewGuid();
+                    vehicleVM.TransporterId = vehicleView.TransporterId;
+                    vehicleVM.CurrentLatitude = vehicleView.CurrentLatitude;
+                    vehicleVM.RCNumber = vehicleView.RCNumber;
+                    vehicleVM.CurrentLongitude = vehicleView.CurrentLongitude;
+                    vehicleVM.SizeCubicMeters = vehicleView.SizeCubicMeters;
+                    vehicleVM.CapacityTons = vehicleView.CapacityTons;
+                    vehicleVM.InsuranceExpiry = vehicleView.InsuranceExpiry;
+                    vehicleVM.RoadTaxExpiry = vehicleView.RoadTaxExpiry;
+                    vehicleVM.IsAvailable = vehicleView.IsAvailable;
+                    vehicleVM.UploadPhoneUrl = vehicleView.UploadPhoneUrl;
+                    vehicleVM.VehicleNumber = vehicleView.VehicleNumber;
+                    vehicleVM.CT_VehicleType = vehicleView.CT_VehicleType;
+                    vehicleVM.CTBodyType = vehicleView.CTBodyType;
+                    vehicleVM.IsDeleted = false;
+                    _db.Vehicles.Add(vehicleVM);
+                }
+                else
+                {
+                    vehicleView.Id = vehicleVM.Id;
+                    vehicleVM.TransporterId = vehicleView.TransporterId;
+                    vehicleVM.CurrentLatitude = vehicleView.CurrentLatitude;
+                    vehicleVM.RCNumber = vehicleView.RCNumber;
+                    vehicleVM.CurrentLongitude = vehicleView.CurrentLongitude;
+                    vehicleVM.SizeCubicMeters = vehicleView.SizeCubicMeters;
+                    vehicleVM.CapacityTons = vehicleView.CapacityTons;
+                    vehicleVM.InsuranceExpiry = vehicleView.InsuranceExpiry;
+                    vehicleVM.RoadTaxExpiry = vehicleView.RoadTaxExpiry;
+                    vehicleVM.IsAvailable = vehicleView.IsAvailable;
+                    vehicleVM.UploadPhoneUrl = vehicleView.UploadPhoneUrl;
+                    vehicleVM.VehicleNumber = vehicleView.VehicleNumber;
+                    vehicleVM.CT_VehicleType = vehicleView.CT_VehicleType;
+                    vehicleVM.CTBodyType = vehicleView.CTBodyType;
+                    vehicleVM.IsDeleted = false;
+                }
+                saveCnt = await _db.SaveChangesAsync();
             }
-            else
+            catch (Exception ex)
             {
-                vehicleVM = await _db.Vehicles.Where(x => x.Id == vehicleView.Id).FirstOrDefaultAsync();
-                vehicleVM.TransporterId = vehicleView.TransporterId;
-                vehicleVM.CurrentLatitude = vehicleView.CurrentLatitude;
-                vehicleVM.RCNumber = vehicleView.RCNumber;
-                vehicleVM.CurrentLongitude = vehicleView.CurrentLongitude;
-                vehicleVM.SizeCubicMeters = vehicleView.SizeCubicMeters;
-                vehicleVM.CapacityTons = vehicleView.CapacityTons;
-                vehicleVM.InsuranceExpiry = vehicleView.InsuranceExpiry;
-                vehicleVM.RoadTaxExpiry = vehicleView.RoadTaxExpiry;
-                vehicleVM.IsAvailable = vehicleView.IsAvailable;
-                vehicleVM.UploadPhoneUrl = vehicleView.UploadPhoneUrl;
-                vehicleVM.VehicleNumber = vehicleView.VehicleNumber;
-                vehicleVM.CT_VehicleType = vehicleView.CT_VehicleType;
-                vehicleVM.CTBodyType = vehicleView.CTBodyType;
-                vehicleVM.IsDeleted = false;
+
             }
-             var saveCnt = await _db.SaveChangesAsync();
             if (saveCnt > 0)
                 vehicleView.Message = "Success";
             else
