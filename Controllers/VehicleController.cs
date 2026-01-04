@@ -10,7 +10,7 @@ namespace navgatix.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class VehicleController : Controller
+    public class VehicleController : ControllerBase
     {
         private readonly IVehicleService _vehicleService;
         private readonly IBookingService _bookingService;

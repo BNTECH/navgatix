@@ -22,8 +22,6 @@ namespace satguruApp.Service.Services
             var saveCnt = 0;
             try
             {
-
-
                 var vehicleVM = await (from vehicle in _db.Vehicles where (vehicle.Id == vehicleView.Id || (vehicle.VehicleNumber.ToLower() == vehicleView.VehicleNumber || vehicle.RCNumber.ToLower() == vehicleView.RCNumber.ToLower())) select vehicle).FirstOrDefaultAsync();
                 if (vehicleView.Id == Guid.Empty && vehicleVM == null)
                 {
@@ -120,7 +118,7 @@ namespace satguruApp.Service.Services
 
         public async Task<BookingViewModel> BookingVehicle(BookingViewModel model)
         {
-            var vehicle = await _db.Vehicles.Where(x => x.Id == model.VehicleId && x.IsAvailable == true).FirstOrDefaultAsync();
+            var vehicle = await _db.Vehicles.Where(x => x.Id == model.VehicleId && (x.IsAvailable == true || x.IsAvailable == null)).FirstOrDefaultAsync();
             if (vehicle != null)
             {
                 vehicle.IsAvailable = false;
@@ -155,12 +153,13 @@ namespace satguruApp.Service.Services
                     _db.Bookings.Add(bookingExists);
                 }
                 await _db.SaveChangesAsync();
-                return model;
+                model.Id = bookingExists.Id;
             }
             else
             {
-                throw new Exception("Vehicle is not available for booking.");
+                model.Message = "Vehicle is not available for booking.";
             }
+            return model;
         }
         public async Task<BookingViewModel> CancelBookingVehicleRide(BookingViewModel model)
         {
@@ -177,12 +176,13 @@ namespace satguruApp.Service.Services
                     _db.Vehicles.Update(vehicle);
                 }
                 await _db.SaveChangesAsync();
-                return model;
+                model.Message = "Your Booking has been cancelled.";
             }
             else
             {
-                throw new Exception("Booking not found or already cancelled.");
+                model.Message = "Booking not found or already cancelled.";
             }
+            return model;
         }
     }
 }

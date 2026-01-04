@@ -59,18 +59,18 @@ namespace satguruApp.Service.ViewModels
         }
         public long Id { get; set; }
 
-        public string CustomerId { get; set; }
-        public string CustomerName { get; set; }
+        public string? CustomerId { get; set; }
+        public string? CustomerName { get; set; }
 
         public Guid? VehicleId { get; set; }
-        public string VehicleNumber { get; set; }
+        public string? VehicleNumber { get; set; }
 
         public Guid? DriverId { get; set; }
-        public string DriverName { get; set; }
+        public string? DriverName { get; set; }
 
-        public string PickupAddress { get; set; }
+        public string? PickupAddress { get; set; }
 
-        public string DropAddress { get; set; }
+        public string? DropAddress { get; set; }
 
         public decimal? PickupLat { get; set; }
 
@@ -80,7 +80,7 @@ namespace satguruApp.Service.ViewModels
 
         public decimal? DropLng { get; set; }
 
-        public string GoodsType { get; set; }
+        public string? GoodsType { get; set; }
 
         public decimal? GoodsWeight { get; set; }
 
@@ -98,6 +98,7 @@ namespace satguruApp.Service.ViewModels
 
         public bool? IsDeleted { get; set; }
 
+        public string? Message { get; set; }
         public virtual ICollection<BookingBenefitsLog> BookingBenefitsLogs { get; set; } = new List<BookingBenefitsLog>();
 
         public virtual User Customer { get; set; }
