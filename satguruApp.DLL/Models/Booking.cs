@@ -5,15 +5,15 @@ namespace satguruApp.DLL.Models;
 
 public partial class Booking
 {
-    public string CustomerId { get; set; }
+    public string? CustomerId { get; set; }
 
     public Guid? VehicleId { get; set; }
 
     public Guid? DriverId { get; set; }
 
-    public string PickupAddress { get; set; }
+    public string? PickupAddress { get; set; }
 
-    public string DropAddress { get; set; }
+    public string? DropAddress { get; set; }
 
     public decimal? PickupLat { get; set; }
 
@@ -23,7 +23,7 @@ public partial class Booking
 
     public decimal? DropLng { get; set; }
 
-    public string GoodsType { get; set; }
+    public string? GoodsType { get; set; }
 
     public decimal? GoodsWeight { get; set; }
 
