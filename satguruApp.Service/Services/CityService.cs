@@ -72,10 +72,10 @@ namespace satguruApp.Service.Services
             ctyDetail.IsDeleted = !ctyDetail.IsDeleted;
             return await _db.SaveChangesAsync();
         }
-        public async Task<List<CityViewModel>> GetAll(string name = "", int countryId = 1)
+        public async Task<List<CityViewModel>> GetAll(string name = "", int stateId = 1)
         {
             return await (from cty in _db.Cities
-                          where cty.IsDeleted == false && (string.IsNullOrEmpty(name) || cty.CityName.ToLower().Contains(name.ToLower()) || (countryId > 0 && cty.StateId == countryId))
+                          where cty.IsDeleted == false && (string.IsNullOrEmpty(name) || cty.CityName.ToLower().Contains(name.ToLower()) || (stateId > 0 && cty.StateId == stateId))
 
                           select new CityViewModel
                           {
@@ -89,5 +89,22 @@ namespace satguruApp.Service.Services
                               IsDeleted = cty.IsDeleted,
                           }).ToListAsync();
         }
+        public async Task<List<CityViewModel>> GetCitybyStateId(int stateId = 1)
+        {
+            return await (from cty in _db.Cities
+                          where cty.IsDeleted == false && cty.StateId == stateId
+                          select new CityViewModel
+                          {
+                              Id = cty.Id,
+                              CityName = cty.CityName,
+                              CreatedDatetime = cty.CreatedDatetime,
+                              CreatedBy = cty.CreatedBy,
+                              StateId = cty.StateId,
+                              UpdatedDatetime = cty.UpdatedDatetime,
+                              UpdatedBy = cty.UpdatedBy,
+                              IsDeleted = cty.IsDeleted,
+                          }).ToListAsync();
+        }
+
     }
 }
