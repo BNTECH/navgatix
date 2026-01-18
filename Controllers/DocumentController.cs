@@ -111,7 +111,6 @@ namespace navgatix.Controllers
                 documentDetailViewModel.DocStream = null;
                 await _documentService.SaveUpdateDocument(documentDetailViewModel);
 
-
                 //var files = Request.Form.Files;
                 //foreach (var item in files)
                 //{
@@ -143,8 +142,6 @@ namespace navgatix.Controllers
             }
             return Ok(documentDetailViewModel);
         }
-
-
 
         [HttpPost("delete")]
         [ProducesResponseType(200, Type = typeof(DocumentViewModel))]
