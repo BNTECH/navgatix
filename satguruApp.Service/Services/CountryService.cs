@@ -19,7 +19,8 @@ namespace satguruApp.Service.Services
         public async Task<CountryViewModel> GetById(int? id, string name = "")
         {
             return await (from country in _db.Countries
-                          where country.Id == id.GetValueOrDefault() && country.Name.ToLower() == (string.IsNullOrEmpty(name) ? country.Name : name).ToLower() && country.IsDeleted == false
+                          where country.Id == id.GetValueOrDefault() //&& country.Name.ToLower() == (string.IsNullOrEmpty(name) ? country.Name : name).ToLower()
+                                                                     && country.IsDeleted == false
                           select new CountryViewModel
                           {
                               Id = country.Id,
@@ -77,23 +78,32 @@ namespace satguruApp.Service.Services
         }
         public async Task<List<CountryViewModel>> GetAll(string name = "")
         {
-            return await (from contry in _db.Countries
-                          where contry.IsDeleted == false && (string.IsNullOrEmpty(name) || contry.Name.ToLower().Contains(name.ToLower()))
+            try
+            {
+                return await (from contry in _db.Countries
+                              where contry.IsDeleted == false && (string.IsNullOrEmpty(name) || contry.Name.ToLower().Contains(name.ToLower()))
 
-                          select new
-                          CountryViewModel
-                          {
-                              Id = contry.Id,
-                              Name = contry.Name,
-                              CountryCodeTwo = contry.CountryCodeTwo,
-                              CountryCodeThree = contry.CountryCodeThree,
-                              RegionName = contry.RegionName,
-                              IsDeleted = contry.IsDeleted,
-                              CreatedBy = contry.CreatedBy,
-                              CreatedDatetime = contry.CreatedDatetime,
-                              UpdatedBy = contry.UpdatedBy,
-                              UpdatedDatetime = contry.UpdatedDatetime
-                          }).ToListAsync();
+                              select new
+                              CountryViewModel
+                              {
+                                  Id = contry.Id,
+                                  Name = contry.Name,
+                                  CountryCodeTwo = contry.CountryCodeTwo,
+                                  CountryCodeThree = contry.CountryCodeThree,
+                                  RegionName = contry.RegionName,
+                                  IsDeleted = contry.IsDeleted,
+                                  CreatedBy = contry.CreatedBy,
+                                  CreatedDatetime = contry.CreatedDatetime,
+                                  UpdatedBy = contry.UpdatedBy,
+                                  UpdatedDatetime = contry.UpdatedDatetime
+                              }).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                return new List<CountryViewModel>();
+
+            }
+
         }
     }
 }

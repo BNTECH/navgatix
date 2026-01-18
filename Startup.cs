@@ -59,6 +59,11 @@ namespace navgatix
             services.AddScoped<ICommonTypeService, CommonTypeService>();
             services.AddScoped<ITransportService, TransportService>();
             services.AddScoped<IDocumentService, DocumentService>();
+            services.AddScoped<ICountryService, CountryService>();
+            services.AddScoped<IStateService, StateService>();
+            services.AddScoped<ICityService, CityService>();
+            services.AddScoped<ISystemConfigurationService, SystemConfigurationService>();
+
 
             services.AddAuthentication(options =>
             {

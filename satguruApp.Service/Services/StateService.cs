@@ -73,7 +73,7 @@ namespace satguruApp.Service.Services
             stateDetail.IsDeleted = !stateDetail.IsDeleted;
             return await _db.SaveChangesAsync();
         }
-        public async Task<List<StatelistViewModel>> GetAll(string name = "", int countryId = 0)
+        public async Task<List<StatelistViewModel>> GetAll(string name = "", int countryId = 1)
         {
             return await (from cust in _db.States
                           where cust.IsDeleted == false && (string.IsNullOrEmpty(name) || cust.Name.ToLower().Contains(name.ToLower()) || (countryId > 0 && cust.CountryId == countryId))
