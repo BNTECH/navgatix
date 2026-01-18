@@ -14,5 +14,6 @@ namespace satguruApp.Service.Services.Interfaces
         public Task<CityViewModel> SaveChangeAsync(CityViewModel cityView);
         public Task<int> Delete(int id);
         public Task<List<CityViewModel>> GetAll(string name = "", int stateId = 0);
+        public Task<List<CityViewModel>> GetCitybyStateId(int stateId = 1);
     }
 }

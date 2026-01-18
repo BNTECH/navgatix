@@ -43,5 +43,12 @@ namespace navgatix.Controllers
             return Ok(await _cityService.Delete(id));
         }
 
+        [HttpGet("getCitybyStateId/{id}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetCitybyStateId(int id)
+        {
+            return Ok(await _cityService.GetCitybyStateId(id));
+        }
+
     }
 }
