@@ -92,6 +92,7 @@ namespace satguruApp.DLL.Models
         public virtual DbSet<EmployeeVeteranStatu> EmployeeVeteranStatus { get; set; }
 
         public virtual DbSet<FAAccountType> FAAccountTypes { get; set; }
+        public virtual DbSet<ContactU> ContactUs { get; set; }
 
         public virtual DbSet<FAHoursCode> FAHoursCodes { get; set; }
 
@@ -278,7 +279,21 @@ namespace satguruApp.DLL.Models
 
                 entity.Property(e => e.Id).ValueGeneratedOnAdd();
             });
-
+            modelBuilder.Entity<ContactU>(entity =>
+            {
+                entity.Property(e => e.CreatedDatetime).HasColumnType("datetime");
+                entity.Property(e => e.Description).IsUnicode(false);
+                entity.Property(e => e.EmailId)
+                    .HasMaxLength(550)
+                    .IsUnicode(false);
+                entity.Property(e => e.PhoneNumber)
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+                entity.Property(e => e.UpdatedDatetime).HasColumnType("datetime");
+                entity.Property(e => e.UserId)
+                    .HasMaxLength(550)
+                    .IsUnicode(false);
+            });
             modelBuilder.Entity<Candidate>(entity =>
             {
                 entity
