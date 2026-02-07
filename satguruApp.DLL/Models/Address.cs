@@ -19,17 +19,17 @@ public partial class Address
 
     public double? Longitude { get; set; }
 
-    public string? Location_Code { get; set; }
+    public string Location_Code { get; set; }
 
     public bool? Is_Enable_Geo_Fencing { get; set; }
 
-    public string? Name { get; set; }
+    public string Name { get; set; }
 
     public bool? Is_Deleted { get; set; }
 
-    public string? Address1 { get; set; }
+    public string Address1 { get; set; }
 
-    public string? Zip_Code { get; set; }
+    public string Zip_Code { get; set; }
 
     public int? Country_Id { get; set; }
 

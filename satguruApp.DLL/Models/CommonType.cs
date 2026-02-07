@@ -7,7 +7,7 @@ public partial class CommonType
 {
     public int Id { get; set; }
 
-    public string? Name { get; set; }
+    public string Name { get; set; }
 
     public int? CTID { get; set; }
 
@@ -21,21 +21,21 @@ public partial class CommonType
 
     public int? UpdatedBy { get; set; }
 
-    public string? Keys { get; set; }
+    public string Keys { get; set; }
 
-    public string? Code { get; set; }
+    public string Code { get; set; }
 
     public bool? IsSystem { get; set; }
 
     public int? ValueInt { get; set; }
 
-    public string? ValueStr { get; set; }
+    public string ValueStr { get; set; }
 
     public DateTime? ValueDT { get; set; }
 
-    public string? ValueDesc { get; set; }
+    public string ValueDesc { get; set; }
 
-    public string? Source { get; set; }
+    public string Source { get; set; }
 
     public int? OrderBy { get; set; }
 
@@ -48,4 +48,8 @@ public partial class CommonType
     public virtual ICollection<Company> CompanyCTIndustries { get; set; } = new List<Company>();
 
     public virtual ICollection<Company> CompanyCTTypes { get; set; } = new List<Company>();
+
+    public virtual ICollection<FAPayCategoryDetail> FAPayCategoryDetailCTParentTypes { get; set; } = new List<FAPayCategoryDetail>();
+
+    public virtual ICollection<FAPayCategoryDetail> FAPayCategoryDetailCTPayCategoryTypes { get; set; } = new List<FAPayCategoryDetail>();
 }

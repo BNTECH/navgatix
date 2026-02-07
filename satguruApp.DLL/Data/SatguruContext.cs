@@ -84,9 +84,19 @@ public partial class SatguruContext : DbContext
 
     public virtual DbSet<FAAccountType> FAAccountTypes { get; set; }
 
+    public virtual DbSet<FAHoursCode> FAHoursCodes { get; set; }
+
+    public virtual DbSet<FAPayCategory> FAPayCategories { get; set; }
+
+    public virtual DbSet<FAPayCategoryDetail> FAPayCategoryDetails { get; set; }
+
     public virtual DbSet<FaAccountTypeCost> FaAccountTypeCosts { get; set; }
 
     public virtual DbSet<Gender> Genders { get; set; }
+
+    public virtual DbSet<HRPayCycle> HRPayCycles { get; set; }
+
+    public virtual DbSet<HRPayPeriod> HRPayPeriods { get; set; }
 
     public virtual DbSet<HRPosition> HRPositions { get; set; }
 
@@ -97,6 +107,24 @@ public partial class SatguruContext : DbContext
     public virtual DbSet<JobSkill> JobSkills { get; set; }
 
     public virtual DbSet<LiveVehicleTracking> LiveVehicleTrackings { get; set; }
+
+    public virtual DbSet<NavLink> NavLinks { get; set; }
+
+    public virtual DbSet<NavLinkAudit> NavLinkAudits { get; set; }
+
+    public virtual DbSet<NavLinkRole> NavLinkRoles { get; set; }
+
+    public virtual DbSet<NavLinkRolesAudit> NavLinkRolesAudits { get; set; }
+
+    public virtual DbSet<NavPosition> NavPositions { get; set; }
+
+    public virtual DbSet<NavPositionsAudit> NavPositionsAudits { get; set; }
+
+    public virtual DbSet<NavTree> NavTrees { get; set; }
+
+    public virtual DbSet<NavTreeAudit> NavTreeAudits { get; set; }
+
+    public virtual DbSet<NgxTableColumn> NgxTableColumns { get; set; }
 
     public virtual DbSet<Notification> Notifications { get; set; }
 
@@ -142,7 +170,9 @@ public partial class SatguruContext : DbContext
 
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_AccountType_CreatedDate")
                 .HasColumnType("datetime");
+            entity.Property(e => e.IsDeleted).HasAnnotation("Relational:DefaultConstraintName", "DF_AccountType_IsDeleted");
             entity.Property(e => e.Name)
                 .HasMaxLength(100)
                 .IsUnicode(false);
@@ -167,6 +197,7 @@ public partial class SatguruContext : DbContext
         {
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF__Bookings__Create__7B264821")
                 .HasColumnType("datetime");
             entity.Property(e => e.CustomerId)
                 .HasMaxLength(450)
@@ -856,6 +887,105 @@ public partial class SatguruContext : DbContext
             entity.Property(e => e.UpdatedDatetine).HasColumnType("datetime");
         });
 
+        modelBuilder.Entity<FAHoursCode>(entity =>
+        {
+            entity.ToTable("FAHoursCode");
+
+            entity.Property(e => e.AlwaysAvailableinTSOnBasisOfPayCategory).HasAnnotation("Relational:DefaultConstraintName", "DF_FAHoursCode_AlwaysAvailableinTSOnBasisOfPayCategory");
+            entity.Property(e => e.ApplyTimeOffHrsToAccrual).HasAnnotation("Relational:DefaultConstraintName", "DF_FAHoursCode_ApplyTimeOffHrsToAccrual");
+            entity.Property(e => e.ColorCode).HasMaxLength(30);
+            entity.Property(e => e.Description)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.EnableManualTimeOffAdjustment).HasAnnotation("Relational:DefaultConstraintName", "DF_Table_1_IsManualTimeOffAdjustment");
+            entity.Property(e => e.HolidaysNotesMandatory).HasAnnotation("Relational:DefaultConstraintName", "DF_FAHoursCode_HolidaysNotesMandatory");
+            entity.Property(e => e.IsAvailableBillRates).HasAnnotation("Relational:DefaultConstraintName", "DF_FAHoursCode_IsAvailableBillRates");
+            entity.Property(e => e.IsAvailablePayRates).HasAnnotation("Relational:DefaultConstraintName", "DF_FAHoursCode_IsAvailablePayRates");
+            entity.Property(e => e.Label)
+                .HasMaxLength(150)
+                .IsUnicode(false);
+            entity.Property(e => e.MaxPayoutHrs).HasColumnType("decimal(18, 0)");
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.NotAllowSubmitHrsFutureDates).HasAnnotation("Relational:DefaultConstraintName", "DF_FAHoursCode_NotAllowSubmitHrsFutureDates");
+            entity.Property(e => e.NotConsiderOTPayRateForADPReport).HasAnnotation("Relational:DefaultConstraintName", "DF_FAHoursCode_NotConsiderOTPayRateForADPReport");
+            entity.Property(e => e.NotesMandatoryLevel1Approval).HasAnnotation("Relational:DefaultConstraintName", "DF_FAHoursCode_NotesMandatoryLevel1Approval");
+            entity.Property(e => e.RateCode)
+                .IsRequired()
+                .HasMaxLength(4)
+                .IsUnicode(false);
+            entity.Property(e => e.WeekendDaysNotesMandatory).HasAnnotation("Relational:DefaultConstraintName", "DF_FAHoursCode_WeekendDaysNotesMandatory");
+            entity.Property(e => e.WorkingDaysNotesMandatory).HasAnnotation("Relational:DefaultConstraintName", "DF_FAHoursCode_WorkingDaysNotesMandatory");
+
+            entity.HasOne(d => d.Division).WithMany(p => p.FAHoursCodes)
+                .HasForeignKey(d => d.DivisionID)
+                .HasConstraintName("FK_FAHoursCode_Company");
+        });
+
+        modelBuilder.Entity<FAPayCategory>(entity =>
+        {
+            entity.ToTable("FAPayCategory");
+
+            entity.Property(e => e.ID).ValueGeneratedNever();
+            entity.Property(e => e.Code).HasMaxLength(20);
+            entity.Property(e => e.CreatedBy).HasAnnotation("Relational:DefaultConstraintName", "DF_FAPayCategory_CreatedBy");
+            entity.Property(e => e.CreatedDateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_FAPayCategory_CreatedDateTime");
+            entity.Property(e => e.IsActive).HasAnnotation("Relational:DefaultConstraintName", "DF_FAPayCategory_IsActive");
+            entity.Property(e => e.IsDeleted).HasAnnotation("Relational:DefaultConstraintName", "DF_FAPayCategory_IsDeleted");
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.UpdatedBy)
+                .HasDefaultValue(0)
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_FAPayCategory_UpdatedBy");
+            entity.Property(e => e.UpdatedDateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_FAPayCategory_UpdatedDateTime");
+
+            entity.HasOne(d => d.Division).WithMany(p => p.FAPayCategories)
+                .HasForeignKey(d => d.DivisionID)
+                .HasConstraintName("FK_FAPayCategory_Company");
+        });
+
+        modelBuilder.Entity<FAPayCategoryDetail>(entity =>
+        {
+            entity.ToTable("FAPayCategoryDetail");
+
+            entity.Property(e => e.ID).ValueGeneratedNever();
+            entity.Property(e => e.CreatedBy).HasAnnotation("Relational:DefaultConstraintName", "DF_FAPayCategoryDetail_CreatedBy");
+            entity.Property(e => e.CreatedDateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_FAPayCategoryDetail_CreatedDateTime");
+            entity.Property(e => e.IsDeleted).HasAnnotation("Relational:DefaultConstraintName", "DF_FAPayCategoryDetail_IsDeleted");
+            entity.Property(e => e.UpdatedBy)
+                .HasDefaultValue(0)
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_FAPayCategoryDetail_UpdatedBy");
+            entity.Property(e => e.UpdatedDateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_FAPayCategoryDetail_UpdatedDateTime");
+
+            entity.HasOne(d => d.CTParentType).WithMany(p => p.FAPayCategoryDetailCTParentTypes)
+                .HasForeignKey(d => d.CTParentTypeID)
+                .HasConstraintName("FK_FAPayCategoryDetail_CommonType");
+
+            entity.HasOne(d => d.CTPayCategoryTypes).WithMany(p => p.FAPayCategoryDetailCTPayCategoryTypes)
+                .HasForeignKey(d => d.CTPayCategoryTypesID)
+                .HasConstraintName("FK_FAPayCategoryDetail_CommonType1");
+
+            entity.HasOne(d => d.FAHourCode).WithMany(p => p.FAPayCategoryDetails)
+                .HasForeignKey(d => d.FAHourCodeID)
+                .HasConstraintName("FK_FAPayCategoryDetail_FAHoursCode");
+
+            entity.HasOne(d => d.FAPayCategory).WithMany(p => p.FAPayCategoryDetails)
+                .HasForeignKey(d => d.FAPayCategoryID)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_FAPayCategoryDetail_FAPayCategoryDetail");
+        });
+
         modelBuilder.Entity<FaAccountTypeCost>(entity =>
         {
             entity.ToTable("FaAccountTypeCost");
@@ -869,9 +999,63 @@ public partial class SatguruContext : DbContext
         {
             entity.ToTable("Gender");
 
+            entity.Property(e => e.IsDeleted).HasAnnotation("Relational:DefaultConstraintName", "DF_Gender_IsDeleted");
             entity.Property(e => e.Name)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<HRPayCycle>(entity =>
+        {
+            entity.ToTable("HRPayCycle");
+
+            entity.Property(e => e.CreatedBy).HasAnnotation("Relational:DefaultConstraintName", "DF_HRPayCycle_CreatedBy");
+            entity.Property(e => e.CreatedDateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_HRPayCycle_CreatedDateTime");
+            entity.Property(e => e.ExcludedDays)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.HoursPerPayPeriod).HasColumnType("numeric(8, 2)");
+            entity.Property(e => e.IsDeleted).HasAnnotation("Relational:DefaultConstraintName", "DF_HRPayCycle_IsDeleted");
+            entity.Property(e => e.Title)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.TotalPayPeriods).HasColumnType("numeric(8, 2)");
+            entity.Property(e => e.UpdatedBy)
+                .HasDefaultValue(0)
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_HRPayCycle_UpdatedBy");
+            entity.Property(e => e.UpdatedDateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_HRPayCycle_UpdatedDateTime");
+        });
+
+        modelBuilder.Entity<HRPayPeriod>(entity =>
+        {
+            entity.HasKey(e => e.ID).HasName("PK_HRPayPeriod_1");
+
+            entity.ToTable("HRPayPeriod");
+
+            entity.Property(e => e.CreatedBy).HasAnnotation("Relational:DefaultConstraintName", "DF_HRPayPeriod_CreatedBy");
+            entity.Property(e => e.CreatedDateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_HRPayPeriod_CreatedDateTime");
+            entity.Property(e => e.EndDate).HasColumnType("date");
+            entity.Property(e => e.HRTimeOffCalcDate).HasColumnType("datetime");
+            entity.Property(e => e.IsDeleted).HasAnnotation("Relational:DefaultConstraintName", "DF_HRPayPeriod_IsDeleted");
+            entity.Property(e => e.IsPayRollStatus).HasAnnotation("Relational:DefaultConstraintName", "DF_HRPayPeriod_IsPayRollStatus");
+            entity.Property(e => e.PayDate).HasColumnType("date");
+            entity.Property(e => e.PayRollDate).HasColumnType("date");
+            entity.Property(e => e.StartDate).HasColumnType("date");
+            entity.Property(e => e.Title)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.UpdatedBy)
+                .HasDefaultValue(0)
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_HRPayPeriod_UpdatedBy");
+            entity.Property(e => e.UpdatedDateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_HRPayPeriod_UpdatedDateTime");
         });
 
         modelBuilder.Entity<HRPosition>(entity =>
@@ -963,15 +1147,192 @@ public partial class SatguruContext : DbContext
                 .HasConstraintName("FK__LiveVehic__Vehic__46B27FE2");
         });
 
+        modelBuilder.Entity<NavLink>(entity =>
+        {
+            entity.ToTable("NavLink");
+
+            entity.Property(e => e.CreatedBy).HasAnnotation("Relational:DefaultConstraintName", "DF_NavLink_CreatedBy");
+            entity.Property(e => e.CreatedDateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_NavLink_CreatedDateTime");
+            entity.Property(e => e.IconClass).HasMaxLength(150);
+            entity.Property(e => e.IconUrl).HasMaxLength(150);
+            entity.Property(e => e.IsDeleted).HasAnnotation("Relational:DefaultConstraintName", "DF_NavLink_IsDeleted");
+            entity.Property(e => e.LinkJson).IsUnicode(false);
+            entity.Property(e => e.LinkText).HasMaxLength(150);
+            entity.Property(e => e.Source)
+                .HasMaxLength(3)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.Title)
+                .IsRequired()
+                .HasMaxLength(150);
+            entity.Property(e => e.UpdatedBy)
+                .HasDefaultValue(0)
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_NavLink_UpdatedBy");
+            entity.Property(e => e.UpdatedDateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_NavLink_UpdatedDateTime");
+            entity.Property(e => e.Url).HasMaxLength(150);
+        });
+
+        modelBuilder.Entity<NavLinkAudit>(entity =>
+        {
+            entity.ToTable("NavLinkAudit");
+
+            entity.Property(e => e.AuditedDateTime).HasColumnType("datetime");
+            entity.Property(e => e.CreatedBy).HasAnnotation("Relational:DefaultConstraintName", "DF__NavLinkAu__Creat__34749F6D");
+            entity.Property(e => e.CreatedDateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF__NavLinkAu__Creat__3568C3A6");
+            entity.Property(e => e.IconClass).HasMaxLength(150);
+            entity.Property(e => e.IconUrl).HasMaxLength(150);
+            entity.Property(e => e.IsDeleted).HasAnnotation("Relational:DefaultConstraintName", "DF__NavLinkAu__IsDel__38453051");
+            entity.Property(e => e.LinkJson).IsUnicode(false);
+            entity.Property(e => e.LinkText).HasMaxLength(150);
+            entity.Property(e => e.Source)
+                .HasMaxLength(3)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.Title)
+                .IsRequired()
+                .HasMaxLength(150);
+            entity.Property(e => e.UpdatedBy)
+                .HasDefaultValue(0)
+                .HasAnnotation("Relational:DefaultConstraintName", "DF__NavLinkAu__Updat__365CE7DF");
+            entity.Property(e => e.UpdatedDateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF__NavLinkAu__Updat__37510C18");
+            entity.Property(e => e.Url).HasMaxLength(150);
+        });
+
+        modelBuilder.Entity<NavLinkRole>(entity =>
+        {
+            entity.Property(e => e.CreatedBy).HasAnnotation("Relational:DefaultConstraintName", "DF_NavLinkRoles_CreatedBy");
+            entity.Property(e => e.CreatedDateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_NavLinkRoles_CreatedDateTime");
+            entity.Property(e => e.IsDeleted).HasAnnotation("Relational:DefaultConstraintName", "DF_NavLinkRoles_IsDeleted");
+            entity.Property(e => e.RoleId).HasMaxLength(150);
+            entity.Property(e => e.UpdatedBy)
+                .HasDefaultValue(0)
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_NavLinkRoles_UpdatedBy");
+            entity.Property(e => e.UpdatedDateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_NavLinkRoles_UpdatedDateTime");
+        });
+
+        modelBuilder.Entity<NavLinkRolesAudit>(entity =>
+        {
+            entity.HasKey(e => e.NavLinkRoleAuditId).HasName("PK_NavLinkRolesAudit_1");
+
+            entity.ToTable("NavLinkRolesAudit");
+
+            entity.Property(e => e.AuditedDateTime).HasColumnType("datetime");
+            entity.Property(e => e.CreatedBy).HasAnnotation("Relational:DefaultConstraintName", "DF__NavLinkRo__Creat__3B219CFC");
+            entity.Property(e => e.CreatedDateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF__NavLinkRo__Creat__3C15C135");
+            entity.Property(e => e.IsDeleted).HasAnnotation("Relational:DefaultConstraintName", "DF__NavLinkRo__IsDel__3EF22DE0");
+            entity.Property(e => e.RoleId).HasMaxLength(150);
+            entity.Property(e => e.UpdatedBy)
+                .HasDefaultValue(0)
+                .HasAnnotation("Relational:DefaultConstraintName", "DF__NavLinkRo__Updat__3D09E56E");
+            entity.Property(e => e.UpdatedDateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF__NavLinkRo__Updat__3DFE09A7");
+        });
+
+        modelBuilder.Entity<NavPosition>(entity =>
+        {
+            entity.Property(e => e.CreatedBy).HasAnnotation("Relational:DefaultConstraintName", "DF_NavPositions_CreatedBy");
+            entity.Property(e => e.CreatedDateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_NavPositions_CreatedDateTime");
+            entity.Property(e => e.IsDeleted).HasAnnotation("Relational:DefaultConstraintName", "DF_NavPositions_IsDeleted");
+            entity.Property(e => e.UpdatedBy)
+                .HasDefaultValue(0)
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_NavPositions_UpdatedBy");
+            entity.Property(e => e.UpdatedDateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_NavPositions_UpdatedDateTime");
+        });
+
+        modelBuilder.Entity<NavPositionsAudit>(entity =>
+        {
+            entity.HasKey(e => e.NavPositionId);
+
+            entity.ToTable("NavPositionsAudit");
+
+            entity.Property(e => e.NavPositionId).ValueGeneratedNever();
+            entity.Property(e => e.AuditedDateTime).HasColumnType("datetime");
+            entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.NavPositionAuditId).ValueGeneratedOnAdd();
+            entity.Property(e => e.UpdatedBy).HasDefaultValue(0);
+            entity.Property(e => e.UpdatedDateTime).HasDefaultValueSql("(getdate())");
+        });
+
+        modelBuilder.Entity<NavTree>(entity =>
+        {
+            entity.ToTable("NavTree");
+
+            entity.Property(e => e.CreatedBy).HasAnnotation("Relational:DefaultConstraintName", "DF_NavTree_CreatedBy");
+            entity.Property(e => e.CreatedDateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_NavTree_CreatedDateTime");
+            entity.Property(e => e.IsDeleted).HasAnnotation("Relational:DefaultConstraintName", "DF_NavTree_IsDeleted");
+            entity.Property(e => e.UpdatedBy)
+                .HasDefaultValue(0)
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_NavTree_UpdatedBy");
+            entity.Property(e => e.UpdatedDateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_NavTree_UpdatedDateTime");
+        });
+
+        modelBuilder.Entity<NavTreeAudit>(entity =>
+        {
+            entity.HasKey(e => e.NavTreeId);
+
+            entity.ToTable("NavTreeAudit");
+
+            entity.Property(e => e.NavTreeId).ValueGeneratedNever();
+            entity.Property(e => e.AuditedDateTime).HasColumnType("datetime");
+            entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.NavTreeAuditId).ValueGeneratedOnAdd();
+            entity.Property(e => e.UpdatedBy).HasDefaultValue(0);
+            entity.Property(e => e.UpdatedDateTime).HasDefaultValueSql("(getdate())");
+        });
+
+        modelBuilder.Entity<NgxTableColumn>(entity =>
+        {
+            entity.ToTable("NgxTableColumn");
+
+            entity.Property(e => e.ID).ValueGeneratedNever();
+            entity.Property(e => e.Columns).IsRequired();
+            entity.Property(e => e.IsDeleted).HasAnnotation("Relational:DefaultConstraintName", "DF_NgxTableColumn_IsDeleted");
+            entity.Property(e => e.ScreenName)
+                .IsRequired()
+                .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.UserEmail)
+                .IsRequired()
+                .HasMaxLength(100);
+        });
+
         modelBuilder.Entity<Notification>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Notifica__3214EC07EF9D2761");
 
-            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF__Notification__Id__0B5CAFEA");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF__Notificat__Creat__0D44F85C")
                 .HasColumnType("datetime");
-            entity.Property(e => e.IsRead).HasDefaultValue(false);
+            entity.Property(e => e.IsRead)
+                .HasDefaultValue(false)
+                .HasAnnotation("Relational:DefaultConstraintName", "DF__Notificat__IsRea__0C50D423");
             entity.Property(e => e.Message)
                 .HasMaxLength(500)
                 .IsUnicode(false);
@@ -1073,6 +1434,7 @@ public partial class SatguruContext : DbContext
 
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_Subject_CreatedDate")
                 .HasColumnType("datetime");
             entity.Property(e => e.Name)
                 .HasMaxLength(500)
@@ -1315,14 +1677,20 @@ public partial class SatguruContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__Vehicles__3214EC075FA80DE5");
 
-            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF__Vehicles__Id__2EDAF651");
             entity.Property(e => e.CapacityTons).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedDatetime).HasColumnType("datetime");
             entity.Property(e => e.CurrentLatitude).HasColumnType("decimal(9, 6)");
             entity.Property(e => e.CurrentLongitude).HasColumnType("decimal(9, 6)");
             entity.Property(e => e.InsuranceExpiry).HasColumnType("date");
-            entity.Property(e => e.IsAvailable).HasDefaultValue(true);
-            entity.Property(e => e.IsDeleted).HasDefaultValue(false);
+            entity.Property(e => e.IsAvailable)
+                .HasDefaultValue(true)
+                .HasAnnotation("Relational:DefaultConstraintName", "DF__Vehicles__IsAvai__30C33EC3");
+            entity.Property(e => e.IsDeleted)
+                .HasDefaultValue(false)
+                .HasAnnotation("Relational:DefaultConstraintName", "DF__Vehicles__IsDele__31B762FC");
             entity.Property(e => e.PermitExpiry).HasColumnType("date");
             entity.Property(e => e.RCNumber)
                 .HasMaxLength(50)
@@ -1349,9 +1717,11 @@ public partial class SatguruContext : DbContext
 
             entity.Property(e => e.Balance)
                 .HasDefaultValue(0m)
+                .HasAnnotation("Relational:DefaultConstraintName", "DF__Wallets__Balance__1F63A897")
                 .HasColumnType("decimal(10, 2)");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF__Wallets__Updated__2057CCD0")
                 .HasColumnType("datetime");
             entity.Property(e => e.UserId)
                 .HasMaxLength(450)

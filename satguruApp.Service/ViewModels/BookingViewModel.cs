@@ -14,7 +14,7 @@ namespace satguruApp.Service.ViewModels
         {
             Id = model.Id,
             CustomerId = model.CustomerId,
-            CustomerName = model.Customer.FirstName+ (!string.IsNullOrEmpty(model.Customer.LastName)? model.Customer.LastName: string.Empty),
+            CustomerName = !string.IsNullOrEmpty(model.CustomerName) ? model.CustomerName : model.Customer.FirstName + (!string.IsNullOrEmpty(model.Customer.LastName) ? model.Customer.LastName : string.Empty),
             VehicleId = model.VehicleId,
             VehicleNumber = model.Vehicle.VehicleNumber,
             DriverId = model.DriverId,
@@ -32,7 +32,13 @@ namespace satguruApp.Service.ViewModels
             CT_BookingStatus = model.CT_BookingStatus,
             ScheduledTime = model.ScheduledTime,
             CreatedAt = model.CreatedAt,
-            IsAvailable = model.IsAvailable
+            IsAvailable = model.IsAvailable,
+            DeptStateId = model.DeptStateId,
+            DeptCityId = model.DeptCityId,
+            ArrivalStateId = model.ArrivalStateId,
+            ArrivalCityId = model.ArrivalCityId,
+
+
         };
         public void ModelMapTo(Booking model)
         {
@@ -55,7 +61,11 @@ namespace satguruApp.Service.ViewModels
             model.ScheduledTime = ScheduledTime;
             model.CreatedAt = CreatedAt;
             model.IsAvailable = IsAvailable;
-
+            model.DeptStateId = DeptStateId;
+            model.DeptCityId = DeptCityId;
+            model.ArrivalStateId = ArrivalStateId;
+            model.ArrivalCityId = ArrivalCityId;
+            model.CustomerName = CustomerName;
         }
         public long Id { get; set; }
 
@@ -99,6 +109,10 @@ namespace satguruApp.Service.ViewModels
         public bool? IsDeleted { get; set; }
 
         public string? Message { get; set; }
+        public int? DeptStateId { get; set; }
+        public int? DeptCityId { get; set; }
+        public int? ArrivalStateId { get; set; }
+        public int? ArrivalCityId { get; set; }
         public virtual ICollection<BookingBenefitsLog> BookingBenefitsLogs { get; set; } = new List<BookingBenefitsLog>();
 
         public virtual User Customer { get; set; }

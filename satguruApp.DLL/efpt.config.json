@@ -4,15 +4,18 @@
    "ContextNamespace": null,
    "FilterSchemas": false,
    "IncludeConnectionString": false,
-   "MinimumProductVersion": "2.6.1080",
+   "IrregularWords": null,
+   "MinimumProductVersion": "2.6.1301",
    "ModelNamespace": null,
    "OutputContextPath": "Data",
    "OutputPath": "Models",
+   "PluralRules": null,
    "PreserveCasingWithRegex": true,
    "ProjectRootNamespace": "satguruApp.DLL",
    "Schemas": null,
    "SelectedHandlebarsLanguage": 2,
    "SelectedToBeGenerated": 0,
+   "SingularRules": null,
    "T4TemplatePath": null,
    "Tables": [
       {
@@ -164,11 +167,31 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[FAHoursCode]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[FAPayCategory]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[FAPayCategoryDetail]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[Gender]",
          "ObjectType": 0
       },
       {
          "Name": "[dbo].[HoursCode]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[HRPayCycle]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[HRPayPeriod]",
          "ObjectType": 0
       },
       {
@@ -185,6 +208,42 @@
       },
       {
          "Name": "[dbo].[LiveVehicleTracking]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[NavLink]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[NavLinkAudit]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[NavLinkRoles]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[NavLinkRolesAudit]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[NavPositions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[NavPositionsAudit]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[NavTree]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[NavTreeAudit]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[NgxTableColumn]",
          "ObjectType": 0
       },
       {
