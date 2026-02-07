@@ -50,6 +50,8 @@ public partial class SatguruContext : DbContext
 
     public virtual DbSet<Complaint> Complaints { get; set; }
 
+    public virtual DbSet<ContactU> ContactUs { get; set; }
+
     public virtual DbSet<Country> Countries { get; set; }
 
     public virtual DbSet<Course> Courses { get; set; }
@@ -201,6 +203,9 @@ public partial class SatguruContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.CustomerId)
                 .HasMaxLength(450)
+                .IsUnicode(false);
+            entity.Property(e => e.CustomerName)
+                .HasMaxLength(250)
                 .IsUnicode(false);
             entity.Property(e => e.DropAddress).HasMaxLength(255);
             entity.Property(e => e.DropLat).HasColumnType("decimal(9, 6)");
@@ -544,6 +549,22 @@ public partial class SatguruContext : DbContext
                 .HasMaxLength(1000)
                 .IsUnicode(false);
             entity.Property(e => e.UpdatedBy).HasDefaultValueSql("(NULL)");
+        });
+
+        modelBuilder.Entity<ContactU>(entity =>
+        {
+            entity.Property(e => e.CreatedDatetime).HasColumnType("datetime");
+            entity.Property(e => e.Description).IsUnicode(false);
+            entity.Property(e => e.EmailId)
+                .HasMaxLength(550)
+                .IsUnicode(false);
+            entity.Property(e => e.PhoneNumber)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedDatetime).HasColumnType("datetime");
+            entity.Property(e => e.UserId)
+                .HasMaxLength(550)
+                .IsUnicode(false);
         });
 
         modelBuilder.Entity<Country>(entity =>

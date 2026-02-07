@@ -308,5 +308,22 @@ namespace satguruApp.Service.Services
             }
             return principal;
         }
+        public async Task<int> SaveContactUsSupport(ContactUsViewModel contactUs)
+        {
+            var contactusEntity = new ContactU
+            {
+                UserId = contactUs.UserId,
+                PhoneNumber = contactUs.PhoneNumber,
+                EmailId = contactUs.EmailId,
+                Description = contactUs.Description,
+                IsDeleted = false,
+                CreatedBy = contactUs.CreatedBy,
+                CreatedDatetime = DateTime.UtcNow,
+            };
+            _db.ContactUs.Add(contactusEntity);
+            await _db.SaveChangesAsync();
+            return contactusEntity.Id;
+        }
+
     }
 }

@@ -23,5 +23,6 @@ namespace satguruApp.Service.Services.Interfaces
         Task<string> UpdateUserRolesAsync(RoleViewModel model);
         Task<string> UpdateUser(UserViewModel model);
         Task<string> ChangePassword(UserViewModel model);
+        Task<int> SaveContactUsSupport(ContactUsViewModel contactUs);
     }
 }

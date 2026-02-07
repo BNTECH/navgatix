@@ -312,6 +312,14 @@ namespace navgatix.Controllers
             var model = await _userService.UpdateUser(userModel);
             return Ok(model);
         }
+        [HttpGet("contactSupport")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ContactSupport(ContactUsViewModel contactUsView)
+        {
+            var model = await _userService.SaveContactUsSupport(contactUsView);
+            return Ok(model);
+        }
+
 
     }
 }

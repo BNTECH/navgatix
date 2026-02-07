@@ -6,7 +6,6 @@ namespace satguruApp.DLL.Models;
 public partial class Booking
 {
     public string CustomerId { get; set; }
-    public string? CustomerName { get; set; }
 
     public Guid? VehicleId { get; set; }
 
@@ -44,13 +43,19 @@ public partial class Booking
 
     public long Id { get; set; }
 
+    public int? DeptStateId { get; set; }
+
+    public int? DeptCityId { get; set; }
+
+    public int? ArrivalStateId { get; set; }
+
+    public int? ArrivalCityId { get; set; }
+
+    public string CustomerName { get; set; }
+
     public virtual User Customer { get; set; }
 
     public virtual Driver Driver { get; set; }
 
     public virtual Vehicle Vehicle { get; set; }
-    public int? DeptStateId { get; set; }
-    public int? DeptCityId { get; set; }
-    public int? ArrivalStateId { get; set; }
-    public int? ArrivalCityId { get; set; }
 }

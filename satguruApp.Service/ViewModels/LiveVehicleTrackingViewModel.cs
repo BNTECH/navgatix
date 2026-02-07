@@ -21,6 +21,7 @@ namespace satguruApp.Service.ViewModels
         public decimal? LastLongitude { get; set; }
 
         public DateTime? LastUpdated { get; set; }
+        public string? Message   { get; set; }
 
         public virtual VehicleViewModel Vehicle { get; set; }
     }

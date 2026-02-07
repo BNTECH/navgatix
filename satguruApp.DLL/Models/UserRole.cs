@@ -11,5 +11,7 @@ public partial class UserRole
 
     public string ApplicationRoleId { get; set; }
 
+    public string Discriminator { get; set; }
+
     public virtual User User { get; set; }
 }

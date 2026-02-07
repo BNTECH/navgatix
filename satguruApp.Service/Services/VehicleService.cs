@@ -189,5 +189,66 @@ namespace satguruApp.Service.Services
             }
             return model;
         }
+        public async Task<List<BookingViewModel>> BookingVehicleRides(string userId)
+        {
+            var bookings = await (from book in _db.Bookings
+                                  join comonType in _db.CommonTypes on book.CT_BookingStatus equals comonType.Id
+                                  where book.CustomerId == userId && comonType.Name != "Cancelled"
+                                  select new BookingViewModel
+                                  {
+                                      Id = book.Id,
+                                      CustomerId = book.CustomerId,
+                                      DriverId = book.DriverId,
+                                      PickupAddress = book.PickupAddress,
+                                      PickupLat = book.PickupLat,
+                                      PickupLng = book.PickupLng,
+                                      DropAddress = book.DropAddress,
+                                      DropLat = book.DropLat,
+                                      DropLng = book.DropLng,
+                                      GoodsType = book.GoodsType,
+                                      GoodsWeight = book.GoodsWeight,
+                                      EstimatedFare = book.EstimatedFare,
+                                      FinalFare = book.FinalFare,
+                                      CT_BookingStatus = book.CT_BookingStatus,
+                                      ScheduledTime = book.ScheduledTime,
+                                      CreatedAt = book.CreatedAt,
+                                      IsAvailable = book.IsAvailable,
+                                      IsDeleted = book.IsDeleted,
+                                  }).ToListAsync();
+            if (bookings.Any())
+            {
+                return bookings;
+            }
+            else
+            {
+                return new List<BookingViewModel>() { new BookingViewModel { Message = "You haven't any booking or cancelled your booking" } };
+            }
+
+        }
+        public async Task<LiveVehicleTrackingViewModel> SaveLiveVehicleTrackings(LiveVehicleTrackingViewModel liveVehicle)
+        {
+            var vehicle = await _db.Vehicles.Where(x => x.Id == liveVehicle.VehicleId && !x.IsDeleted.GetValueOrDefault()).FirstOrDefaultAsync();
+            if (vehicle == null)
+            {
+                var liveVehicleTrack = new LiveVehicleTracking
+                {
+                    VehicleId = vehicle.Id,
+                    LastLatitude = vehicle.CurrentLatitude,
+                    LastLongitude = vehicle.CurrentLongitude,
+                    LastUpdated = DateTime.Now,
+                    IsDeleted = false,
+                };
+                _db.LiveVehicleTrackings.Add(liveVehicleTrack);
+                await _db.SaveChangesAsync();
+                liveVehicle.Id = liveVehicleTrack.Id;
+                return liveVehicle;
+            }
+
+            else
+            {
+                return new LiveVehicleTrackingViewModel { Message = "Vehicle not available now" };
+            }
+
+        }
     }
 }
