@@ -7,11 +7,11 @@ public partial class Company
 {
     public int ID { get; set; }
 
-    public string? Name { get; set; }
+    public string Name { get; set; }
 
-    public string? ShortName { get; set; }
+    public string ShortName { get; set; }
 
-    public string? Descr { get; set; }
+    public string Descr { get; set; }
 
     public int? CTIndustryID { get; set; }
 
@@ -27,27 +27,27 @@ public partial class Company
 
     public DateTimeOffset? UpdatedDateTime { get; set; }
 
-    public string? Email { get; set; }
+    public string Email { get; set; }
 
-    public string? Email2 { get; set; }
+    public string Email2 { get; set; }
 
-    public string? PhoneCell { get; set; }
+    public string PhoneCell { get; set; }
 
-    public string? PhoneCell2 { get; set; }
+    public string PhoneCell2 { get; set; }
 
-    public string? PhoneWork { get; set; }
+    public string PhoneWork { get; set; }
 
-    public string? PhoneWork2 { get; set; }
+    public string PhoneWork2 { get; set; }
 
-    public string? PhoneHome { get; set; }
+    public string PhoneHome { get; set; }
 
-    public string? PhoneHome2 { get; set; }
+    public string PhoneHome2 { get; set; }
 
-    public string? Phone_Main { get; set; }
+    public string Phone_Main { get; set; }
 
-    public string? PhoneOther { get; set; }
+    public string PhoneOther { get; set; }
 
-    public string? PhoneOther2 { get; set; }
+    public string PhoneOther2 { get; set; }
 
     public int? CurrencyID { get; set; }
 
@@ -55,23 +55,23 @@ public partial class Company
 
     public int? CTCategoryID { get; set; }
 
-    public string? WebsiteUrl { get; set; }
+    public string WebsiteUrl { get; set; }
 
-    public string? TIN { get; set; }
+    public string TIN { get; set; }
 
-    public string? PanNumber { get; set; }
+    public string PanNumber { get; set; }
 
-    public string? CINNo { get; set; }
+    public string CINNo { get; set; }
 
-    public string? StatusReportEmail { get; set; }
+    public string StatusReportEmail { get; set; }
 
-    public string? StatusReportName { get; set; }
+    public string StatusReportName { get; set; }
 
-    public string? AccountManagerEmailAddress { get; set; }
+    public string AccountManagerEmailAddress { get; set; }
 
     public int? CTClientTypeID { get; set; }
 
-    public string? EINFederalID { get; set; }
+    public string EINFederalID { get; set; }
 
     public int? CTIncorporationTypeID { get; set; }
 
@@ -105,19 +105,19 @@ public partial class Company
 
     public bool IsEmployeeCommentRequiredOnWorkingHolidayHourCode { get; set; }
 
-    public string? Explain { get; set; }
+    public string Explain { get; set; }
 
-    public string? Cage { get; set; }
+    public string Cage { get; set; }
 
     public int? DUNS { get; set; }
 
-    public string? UEI { get; set; }
+    public string UEI { get; set; }
 
     public decimal? MaxHoursInWeek { get; set; }
 
     public bool? IsAllowHrsOneTaskPerDay { get; set; }
 
-    public string? AccountingName { get; set; }
+    public string AccountingName { get; set; }
 
     public virtual CommonType CTCategory { get; set; }
 
@@ -128,6 +128,10 @@ public partial class Company
     public virtual CommonType CTIndustry { get; set; }
 
     public virtual CommonType CTType { get; set; }
+
+    public virtual ICollection<FAHoursCode> FAHoursCodes { get; set; } = new List<FAHoursCode>();
+
+    public virtual ICollection<FAPayCategory> FAPayCategories { get; set; } = new List<FAPayCategory>();
 
     public virtual ICollection<Company> InverseParentCompany { get; set; } = new List<Company>();
 

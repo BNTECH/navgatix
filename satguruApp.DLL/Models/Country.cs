@@ -7,11 +7,11 @@ public partial class Country
 {
     public int Id { get; set; }
 
-    public string? Name { get; set; }
+    public string Name { get; set; }
 
-    public string? CountryCodeThree { get; set; }
+    public string CountryCodeThree { get; set; }
 
-    public string? CountryCodeTwo { get; set; }
+    public string CountryCodeTwo { get; set; }
 
     public int? CreatedBy { get; set; }
 
@@ -21,9 +21,9 @@ public partial class Country
 
     public DateTime? UpdatedDatetime { get; set; }
 
-    public string? RegionName { get; set; }
+    public string RegionName { get; set; }
 
-    public string? CurrencySymbols { get; set; }
+    public string CurrencySymbols { get; set; }
 
     public bool? IsDeleted { get; set; }
 }

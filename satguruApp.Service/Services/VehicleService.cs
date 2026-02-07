@@ -148,7 +148,12 @@ namespace satguruApp.Service.Services
                         ScheduledTime = model.ScheduledTime,
                         CreatedAt = DateTime.UtcNow,
                         IsAvailable = true,
-                        IsDeleted = false
+                        IsDeleted = false,
+                        DeptStateId = model.DeptStateId,
+                        DeptCityId = model.DeptCityId,
+                        ArrivalStateId = model.ArrivalStateId,
+                        ArrivalCityId = model.ArrivalCityId,
+                        CustomerName = model.CustomerName,
                     };
                     _db.Bookings.Add(bookingExists);
                 }
