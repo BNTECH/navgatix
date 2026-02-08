@@ -22,6 +22,7 @@ namespace satguruApp.Service.ViewModels
 
         public DateTime? LastUpdated { get; set; }
         public string? Message   { get; set; }
+        public string? DeviceId { get; set; }
 
         public virtual VehicleViewModel Vehicle { get; set; }
     }

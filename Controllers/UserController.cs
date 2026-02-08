@@ -151,6 +151,8 @@ namespace navgatix.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> UpdateDriveDetail([FromBody] DriverViewModel model)
         {
+            var user = await _userService.FindUserByUserId(model.UserId);
+            _userService.UpdateUser(new UserViewModel { UserName = user.UserName, Email = user.Email, FirstName = user.FirstName, LastName = user.LastName, PhoneNumber = user.PhoneNumber, DOB = model.DOB });
             var result = await _transportService.SaveDriverAsync(model);
             return Ok(result);
         }
@@ -158,12 +160,16 @@ namespace navgatix.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> UpdateTransporterDetail([FromBody] TransporterViewModel model)
         {
+            var user = await _userService.FindUserByUserId(model.UserId);
+            _userService.UpdateUser(new UserViewModel { UserName = user.UserName, Email = user.Email, FirstName = user.FirstName, LastName = user.LastName, PhoneNumber = user.PhoneNumber, DOB = model.DOB });
             var result = await _transportService.SaveTransporterAsync(model); return Ok(result);
         }
         [HttpPost("updateCustomerDetail")]
         [AllowAnonymous]
         public async Task<IActionResult> UpdateCustomerDetail([FromBody] CustomerDetailViewModel model)
         {
+            var user = await _userService.FindUserByUserId(model.UserId);
+            _userService.UpdateUser(new UserViewModel { UserName = user.UserName, Email = user.Email, FirstName = user.FirstName, LastName = user.LastName, PhoneNumber = user.PhoneNumber });
             var result = _appCustormer.SaveChangeAsync(model);
             return Ok(result);
         }

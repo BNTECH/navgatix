@@ -54,13 +54,19 @@ namespace navgatix.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> BookingVehiclerides(string userId)
         {
-            return Ok(await _vehicleService.BookingVehicleRides( userId));
+            return Ok(await _vehicleService.BookingVehicleRides(userId));
         }
         [HttpPost("saveLiveVehicleTracking")]
         [AllowAnonymous]
         public async Task<IActionResult> SaveLiveVehicleTracking(LiveVehicleTrackingViewModel liveVehicle)
         {
             return Ok(await _vehicleService.SaveLiveVehicleTrackings(liveVehicle));
+        }
+        [HttpPost("getLiveVehicleTracking")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetLiveVehicleTracking(Guid vehicleId, string deviceId)
+        {
+            return Ok(await _vehicleService.GetLiveVehicleTrackings(vehicleId, deviceId));
         }
     }
 }
