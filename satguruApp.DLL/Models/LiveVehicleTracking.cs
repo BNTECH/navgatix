@@ -16,6 +16,7 @@ public partial class LiveVehicleTracking
     public decimal? LastLongitude { get; set; }
 
     public DateTime? LastUpdated { get; set; }
+    public string? DeviceId { get; set; }
 
     public virtual Vehicle Vehicle { get; set; }
 }

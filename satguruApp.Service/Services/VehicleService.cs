@@ -223,7 +223,6 @@ namespace satguruApp.Service.Services
             {
                 return new List<BookingViewModel>() { new BookingViewModel { Message = "You haven't any booking or cancelled your booking" } };
             }
-
         }
         public async Task<LiveVehicleTrackingViewModel> SaveLiveVehicleTrackings(LiveVehicleTrackingViewModel liveVehicle)
         {
@@ -233,6 +232,7 @@ namespace satguruApp.Service.Services
                 var liveVehicleTrack = new LiveVehicleTracking
                 {
                     VehicleId = vehicle.Id,
+                    DeviceId = liveVehicle.DeviceId,
                     LastLatitude = vehicle.CurrentLatitude,
                     LastLongitude = vehicle.CurrentLongitude,
                     LastUpdated = DateTime.Now,
@@ -248,7 +248,26 @@ namespace satguruApp.Service.Services
             {
                 return new LiveVehicleTrackingViewModel { Message = "Vehicle not available now" };
             }
-
+        }
+        public async Task<List<LiveVehicleTrackingViewModel>> GetLiveVehicleTrackings(Guid vehicleId, string deviceId)
+        {
+            var liveVehicleTrack = await _db.LiveVehicleTrackings.Where(x => x.VehicleId == vehicleId && x.DeviceId == deviceId && !x.IsDeleted.GetValueOrDefault()).Select(x => new LiveVehicleTrackingViewModel
+            {
+                Id = x.Id,
+                VehicleId = x.VehicleId,
+                DeviceId = x.DeviceId,
+                LastLatitude = x.LastLatitude,
+                LastLongitude = x.LastLongitude,
+                LastUpdated = x.LastUpdated,
+            }).ToListAsync();
+            if (liveVehicleTrack.Any())
+            {
+                return liveVehicleTrack;
+            }
+            else
+            {
+                return new List<LiveVehicleTrackingViewModel> { new LiveVehicleTrackingViewModel { Message = "Live tracking data not found for the specified vehicle." } };
+            }
         }
     }
 }
