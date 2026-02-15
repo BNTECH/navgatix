@@ -36,7 +36,7 @@ namespace navgatix.Controllers
         [HttpPost("getVehicleList")]
         public async Task<IActionResult> getVehicleList(VehicleViewModel vehicleView)
         {
-            return Ok(await _vehicleService.GetVehicleDetails(vehicleId));
+            return Ok(await _vehicleService.GetVehicleList(vehicleView));
         }
         [AllowAnonymous]
         [HttpGet("deletevehicle/{vehicleId}/{status}")]
