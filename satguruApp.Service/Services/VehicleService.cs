@@ -269,5 +269,45 @@ namespace satguruApp.Service.Services
                 return new List<LiveVehicleTrackingViewModel> { new LiveVehicleTrackingViewModel { Message = "Live tracking data not found for the specified vehicle." } };
             }
         }
+
+        public async Task<List<VehicleViewModel>> GetVehicleList(VehicleViewModel vehicleView)
+        {
+            var vehicleVM = await (from vehicle in _db.Vehicles
+                                   join trans in _db.TransporterDetails on vehicle.TransporterId equals trans.Id
+                                   join cmn in _db.CommonTypes on vehicle.CT_VehicleType equals cmn.Id into vType
+                                   from cmn in vType.DefaultIfEmpty()
+                                   join cmnbdy in _db.CommonTypes on vehicle.CTBodyType equals cmnbdy.Id into VbodyType
+                                   from cmnbdy in VbodyType.DefaultIfEmpty()
+                                   where vehicleView.VehicleNumber == null || vehicle.VehicleNumber.ToLower().Contains(vehicleView.VehicleNumber.ToLower()) &&
+                                   vehicleView.RCNumber == null || vehicle.RCNumber.ToLower().Contains(vehicleView.RCNumber.ToLower()) &&
+                                   ((vehicle.CTBodyType == vehicleView.CTBodyType) || (vehicle.CTBodyType == null || vehicleView.CTBodyType == null || vehicle.CTBodyType.GetValueOrDefault() == 0
+                                   || vehicleView.CTBodyType.GetValueOrDefault() == 0)) &&
+                                   ((vehicle.CT_VehicleType == vehicleView.CT_VehicleType) || (vehicle.CT_VehicleType == null || vehicleView.CT_VehicleType.GetValueOrDefault() == 0 || vehicleView.CT_VehicleType == null)) &&
+                                   ((vehicle.CapacityTons == vehicleView.CapacityTons) || (vehicle.CapacityTons == null || vehicleView.CapacityTons == null || vehicle.CapacityTons.GetValueOrDefault() == 0 || vehicleView.CapacityTons.GetValueOrDefault() == 0)) &&
+                                   ((vehicle.SizeCubicMeters == vehicleView.SizeCubicMeters) || (vehicle.SizeCubicMeters == null || vehicleView.SizeCubicMeters == null || vehicle.SizeCubicMeters.GetValueOrDefault() == 0 || vehicleView.SizeCubicMeters.GetValueOrDefault() == 0)) 
+                                   select new VehicleViewModel
+                                   {
+                                       Id = vehicle.Id,
+                                       CapacityTons = vehicle.CapacityTons,
+                                       CurrentLatitude = vehicle.CurrentLatitude,
+                                       CurrentLongitude = vehicle.CurrentLongitude,
+                                       InsuranceExpiry = vehicle.InsuranceExpiry,
+                                       IsAvailable = vehicle.IsAvailable,
+                                       IsDeleted = vehicle.IsDeleted,
+                                       TransporterName = trans.CompanyName,
+                                       PermitExpiry = vehicle.PermitExpiry,
+                                       RCNumber = vehicle.RCNumber,
+                                       RoadTaxExpiry = vehicle.RoadTaxExpiry,
+                                       SizeCubicMeters = vehicle.SizeCubicMeters,
+                                       TransporterId = vehicle.TransporterId.GetValueOrDefault(),
+                                       UploadPhoneUrl = vehicle.UploadPhoneUrl,
+                                       VehicleNumber = vehicle.VehicleNumber,
+                                       CT_VehicleType = vehicle.CT_VehicleType,
+                                       VehicleTypeName = cmn.Name,
+                                       CTBodyType = vehicle.CTBodyType,
+                                       BodyTypeName = cmnbdy.Name,
+                                   }).ToListAsync();
+            return vehicleVM;
+        }
     }
 }

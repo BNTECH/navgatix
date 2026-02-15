@@ -18,5 +18,6 @@ namespace satguruApp.Service.Services.Interfaces
         Task<List<BookingViewModel>> BookingVehicleRides(string userId);
         Task<LiveVehicleTrackingViewModel> SaveLiveVehicleTrackings(LiveVehicleTrackingViewModel liveVehicle);
         Task<List<LiveVehicleTrackingViewModel>> GetLiveVehicleTrackings(Guid vehicleId, string deviceId);
+        Task<List<VehicleViewModel>> GetVehicleList(VehicleViewModel vehicleView);
     }
 }

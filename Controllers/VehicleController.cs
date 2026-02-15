@@ -33,6 +33,12 @@ namespace navgatix.Controllers
             return Ok(await _vehicleService.GetVehicleDetails(vehicleId));
         }
         [AllowAnonymous]
+        [HttpPost("getVehicleList")]
+        public async Task<IActionResult> getVehicleList(VehicleViewModel vehicleView)
+        {
+            return Ok(await _vehicleService.GetVehicleDetails(vehicleId));
+        }
+        [AllowAnonymous]
         [HttpGet("deletevehicle/{vehicleId}/{status}")]
         public async Task<IActionResult> Deletevehicle(Guid vehicleId, bool status)
         {
