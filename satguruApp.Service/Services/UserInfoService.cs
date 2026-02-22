@@ -28,7 +28,7 @@ namespace satguruApp.Service.Services
             }
             if (userInfo.UserId != null)
             {
-                var usrInfo = await _db.UserInformations.Where(x => x.Email == userInfo.Email || x.UserId == userInfo.UserId || x.PhoneNumber == userInfo.PhoneNumber).FirstOrDefaultAsync();
+                var usrInfo = await _db.UserInformations.Where(x => x.Email == userInfo.Email || x.UserId == userInfo.UserId || ((x.PhoneNumber == userInfo.PhoneNumber && !string.IsNullOrEmpty(x.PhoneNumber) || string.IsNullOrEmpty(userInfo.PhoneNumber)) || (x.Mobile == userInfo.PhoneNumber && !string.IsNullOrEmpty(x.Mobile) || string.IsNullOrEmpty(userInfo.Mobile))).FirstOrDefaultAsync();
                 if ((userInfo.Id == null || userInfo.Id == Guid.Empty) && usrInfo == null)
                 {
                     usrInfo = new UserInformation();
@@ -55,6 +55,7 @@ namespace satguruApp.Service.Services
                 else
                 {
                     usrInfo = await _db.UserInformations.Where(x => x.Id == userInfo.Id || x.Email == userInfo.Email || x.UserId == userInfo.UserId).FirstOrDefaultAsync();
+
                     usrInfo.FirstName = userInfo.FirstName;
                     usrInfo.LastName = userInfo.LastName;
                     usrInfo.Email = userInfo.Email;

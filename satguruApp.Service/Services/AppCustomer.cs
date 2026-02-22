@@ -33,7 +33,10 @@ namespace satguruApp.Service.Services
         public async Task<int> SaveChangeAsync(CustomerDetailViewModel customerView)
         {
             var customer = await (from cust in _db.CustomerDetails
-                                  where ((customerView.Id > 0 && cust.Id != customerView.Id) || (customerView.Id == 0) && (cust.CompanyName.ToLower().Trim() == customerView.CompanyName.ToLower().Trim() || string.IsNullOrEmpty(customerView.CompanyName) || cust.GSTNumber == customerView.GSTNumber || string.IsNullOrEmpty( customerView.GSTNumber)) && cust.IsDeleted == false)
+                                  where ((customerView.Id > 0 && cust.Id != customerView.Id) || 
+                                  (customerView.Id == 0) && 
+                                  (cust.CompanyName.ToLower().Trim() == customerView.CompanyName.ToLower().Trim() && !string.IsNullOrEmpty(customerView.CompanyName)) || 
+                                  (cust.GSTNumber == customerView.GSTNumber && !string.IsNullOrEmpty( customerView.GSTNumber) && !string.IsNullOrEmpty(cust.GSTNumber)) && cust.IsDeleted == false)
                                   select cust).FirstOrDefaultAsync();
             if (customer != null)
             {
