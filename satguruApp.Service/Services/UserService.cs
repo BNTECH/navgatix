@@ -87,6 +87,13 @@ namespace satguruApp.Service.Services
             }
             if (await _userManager.CheckPasswordAsync(user, model.Password))
             {
+                authenticationModel.UserInfoId = (await _db.UserInformations.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id;
+                authenticationModel.CustomerId = (await _db.CustomerDetails.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id;
+                authenticationModel.DriverId = (await _db.Drivers.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id;
+                authenticationModel.FirstName = user.FirstName;
+                authenticationModel.FirstName = user.LastName;
+                authenticationModel.UserId = user.Id;
+                authenticationModel.AppUserId = user.AppUserId;
                 authenticationModel.IsAuthenticated = true;
                 JwtSecurityToken jwtSecurityToken = await CreateJwtToken(user);
                 authenticationModel.Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
@@ -225,9 +232,9 @@ namespace satguruApp.Service.Services
                 var passStatus = await _userManager.CheckPasswordAsync(user, model.Password);
                 if (passStatus)
                 {
+                   
                     TokenRequestViewModel tokenModel = new TokenRequestViewModel() { Email = user.Email, UserName = model.UserName, Password = model.Password };
                     var token = await GetTokenAsync(tokenModel);
-                    //return new AuthenticationViewModel() { UserName = model.UserName, Email = model.Email, IsAuthenticated = true, Message = "Success" };
                     return token;
                 }
             }

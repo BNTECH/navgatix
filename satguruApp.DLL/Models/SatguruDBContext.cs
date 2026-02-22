@@ -63,17 +63,7 @@ namespace satguruApp.DLL.Models
         public virtual DbSet<DivisionPayrollCycle> DivisionPayrollCycles { get; set; }
 
         public virtual DbSet<Document> Documents { get; set; }
-        private DbSet<Driver> drivers;
-
-        public virtual DbSet<Driver> GetDrivers()
-        {
-            return drivers;
-        }
-
-        public virtual void SetDrivers(DbSet<Driver> value)
-        {
-            drivers = value;
-        }
+        public virtual DbSet<Driver> Drivers { get; set; }
 
         public virtual DbSet<Education> Educations { get; set; }
 
