@@ -91,7 +91,7 @@ namespace satguruApp.Service.Services
                 authenticationModel.CustomerId = (await _db.CustomerDetails.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id;
                 authenticationModel.DriverId = (await _db.Drivers.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id;
                 authenticationModel.FirstName = user.FirstName;
-                authenticationModel.FirstName = user.LastName;
+                authenticationModel.LastName = user.LastName;
                 authenticationModel.UserId = user.Id;
                 authenticationModel.AppUserId = user.AppUserId;
                 authenticationModel.IsAuthenticated = true;
