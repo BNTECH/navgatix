@@ -87,9 +87,9 @@ namespace satguruApp.Service.Services
             }
             if (await _userManager.CheckPasswordAsync(user, model.Password))
             {
-                authenticationModel.UserInfoId = (await _db.UserInformations.FirstOrDefaultAsync(x => x.UserId == user.Id)).Id;
+                authenticationModel.UserInfoId = (await _db.UserInformations.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id;
                 authenticationModel.CustomerId = (await _db.CustomerDetails.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id;
-                authenticationModel.DriverId = (await _db.GetDrivers.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id;
+                authenticationModel.DriverId = (await _db.Drivers.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id;
                 authenticationModel.FirstName = user.FirstName;
                 authenticationModel.FirstName = user.LastName;
                 authenticationModel.UserId = user.Id;

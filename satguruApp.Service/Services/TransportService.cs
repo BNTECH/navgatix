@@ -43,11 +43,11 @@ namespace satguruApp.Service.Services
                     driver.LicenseExpiry = driverInfo.LicenseExpiry;
                     driver.PhotoUrl = driverInfo.ProfilePic;
                     driver.IsDeleted = false;
-                    _db.GetDrivers().Add(driver);
+                    _db.Drivers.Add(driver);
                 }
                 else
                 {
-                    Driver driver = await _db.GetDrivers().Where(x => x.Id == driverInfo.Id).FirstOrDefaultAsync();
+                    Driver driver = await _db.Drivers.Where(x => x.Id == driverInfo.Id).FirstOrDefaultAsync();
                     driver.Name = driverInfo.FirstName + " " + driverInfo.LastName;
                     driver.Phone = Convert.ToString(driverInfo.Mobile);
                     driver.LicenseNumber = driverInfo.LicenseNumber;
@@ -105,7 +105,7 @@ namespace satguruApp.Service.Services
 
         public async Task<DriverViewModel> GetDriverDetails(string userId)
         {
-            return await (from drv in _db.GetDrivers()
+            return await (from drv in _db.Drivers
                           join trans in _db.TransporterDetails on drv.TransporterId equals trans.Id
                           join userInfo in _db.UserInformations on drv.UserId.ToLower() equals userInfo.Id.ToString().ToLower()
                           where !drv.IsDeleted.GetValueOrDefault() && drv.UserId == userId

@@ -99,6 +99,7 @@ namespace satguruApp.Service.Services
                               where user.UserId == userId && (user.IsDeleted == null || user.IsDeleted == false)
                               select new UserInfoViewModel
                               {
+                                  Id = user.Id,
                                   FirstName = user.FirstName,
                                   LastName = user.LastName,
                                   Name = user.FirstName + (!string.IsNullOrEmpty(user.LastName) ? (" " + user.LastName) : ""),
