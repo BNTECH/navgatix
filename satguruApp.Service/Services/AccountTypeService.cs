@@ -26,7 +26,7 @@ namespace satguruApp.Service.Services
                         Name = accountType.Name,
                     }).FirstOrDefaultAsync();
         }
-        public async Task<int> SaveChangeAsync(AccountTypeViewModel courseView)
+        public async Task<int> SaveChangeAsync([FromBody] AccountTypeViewModel courseView)
         {
             var accountType = await _db.AccountTypes.Where(x => x.Id == courseView.Id || x.Name.ToLower() == courseView.Name.ToLower()).FirstOrDefaultAsync();
             if (accountType != null)

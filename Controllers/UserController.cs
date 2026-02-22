@@ -88,7 +88,7 @@ namespace navgatix.Controllers
         [AllowAnonymous]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
-        public async Task<IActionResult> UploadProfilePic(UserProfilePicViewModel userProfile)
+        public async Task<IActionResult> UploadProfilePic([FromBody] UserProfilePicViewModel userProfile)
         {
             var uploadFolder = Path.Combine(subPath);
 
@@ -264,7 +264,7 @@ namespace navgatix.Controllers
         }
         [HttpPost("getUserList")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetUserList(UserSearchViewModel userSearch = null)
+        public async Task<IActionResult> GetUserList([FromBody] UserSearchViewModel userSearch = null)
         {
             var model = await _userInfoService.GetUserList(userSearch);
             return Ok(model);
@@ -275,7 +275,7 @@ namespace navgatix.Controllers
 
         [HttpPost("getUserDetailList")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetUserDetailList(UserSearchViewModel userSearch = null)
+        public async Task<IActionResult> GetUserDetailList([FromBody] UserSearchViewModel userSearch = null)
         {
             var model = await _userInfoService.GetUserDetailList(userSearch);
             return Ok(model);
@@ -302,7 +302,7 @@ namespace navgatix.Controllers
         }
         [HttpGet("changePassword")]
         [AllowAnonymous]
-        public async Task<IActionResult> ChangePassword(UserInfoViewModel userInfoView)
+        public async Task<IActionResult> ChangePassword([FromBody] UserInfoViewModel userInfoView)
         {
             UserViewModel userModel = new UserViewModel
             {
@@ -318,9 +318,9 @@ namespace navgatix.Controllers
             var model = await _userService.UpdateUser(userModel);
             return Ok(model);
         }
-        [HttpGet("contactSupport")]
+        [HttpPost("contactSupport")]
         [AllowAnonymous]
-        public async Task<IActionResult> ContactSupport(ContactUsViewModel contactUsView)
+        public async Task<IActionResult> ContactSupport([FromBody] ContactUsViewModel contactUsView)
         {
             var model = await _userService.SaveContactUsSupport(contactUsView);
             return Ok(model);

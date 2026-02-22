@@ -34,7 +34,7 @@ namespace navgatix.Controllers
         }
         [AllowAnonymous]
         [HttpPost("getVehicleList")]
-        public async Task<IActionResult> getVehicleList(VehicleViewModel vehicleView)
+        public async Task<IActionResult> getVehicleList([FromBody] VehicleViewModel vehicleView)
         {
             return Ok(await _vehicleService.GetVehicleList(vehicleView));
         }
@@ -46,13 +46,13 @@ namespace navgatix.Controllers
         }
         [HttpPost("bookVehicle")]
         [AllowAnonymous]
-        public async Task<IActionResult> BookOfVehicle(BookingViewModel model)
+        public async Task<IActionResult> BookOfVehicle([FromBody] BookingViewModel model)
         {
             return Ok(await _vehicleService.BookingVehicle(model));
         }
         [HttpPost("cancelbookingVehicleride")]
         [AllowAnonymous]
-        public async Task<IActionResult> CancelBookingVehicle(BookingViewModel model)
+        public async Task<IActionResult> CancelBookingVehicle([FromBody] BookingViewModel model)
         {
             return Ok(await _vehicleService.CancelBookingVehicleRide(model));
         }
@@ -64,7 +64,7 @@ namespace navgatix.Controllers
         }
         [HttpPost("saveLiveVehicleTracking")]
         [AllowAnonymous]
-        public async Task<IActionResult> SaveLiveVehicleTracking(LiveVehicleTrackingViewModel liveVehicle)
+        public async Task<IActionResult> SaveLiveVehicleTracking([FromBody] LiveVehicleTrackingViewModel liveVehicle)
         {
             return Ok(await _vehicleService.SaveLiveVehicleTrackings(liveVehicle));
         }
