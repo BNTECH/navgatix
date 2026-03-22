@@ -9,20 +9,11 @@
     }
   },
   "profiles": {
-    "http": {
-      "commandName": "Project",
-      "dotnetRunMessages": true,
-      "launchBrowser": true,
-      "applicationUrl": "http://localhost:5293",
-      "environmentVariables": {
-      "ASPNETCORE_ENVIRONMENT": "Production"
-      }
-    },
     "https": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
-      "applicationUrl": "https://navgatix.co.in",
+      "applicationUrl": "https://localhost:7048",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Production"
       }

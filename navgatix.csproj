@@ -1,4 +1,4 @@
-﻿
+
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
@@ -7,35 +7,23 @@
     <RootNamespace>YourProjectName</RootNamespace>
 
     <!-- Folder where Angular build files go -->
-    <SpaRoot>ClientApp\clientapp\</SpaRoot>
+    <SpaRoot>ClientApp\</SpaRoot>
     <DefaultItemExcludes>$(DefaultItemExcludes);$(SpaRoot)node_modules\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="satguruApp.DLL\bin\**" />
-    <Compile Remove="satguruApp.DLL\obj\**" />
-    <Compile Remove="satguruApp.Helpers\bin\**" />
-    <Compile Remove="satguruApp.Helpers\obj\**" />
-    <Compile Remove="satguruApp.Service\bin\**" />
-    <Compile Remove="satguruApp.Service\obj\**" />
-    <Content Remove="satguruApp.DLL\bin\**" />
-    <Content Remove="satguruApp.DLL\obj\**" />
-    <Content Remove="satguruApp.Helpers\bin\**" />
-    <Content Remove="satguruApp.Helpers\obj\**" />
-    <Content Remove="satguruApp.Service\bin\**" />
-    <Content Remove="satguruApp.Service\obj\**" />
-    <EmbeddedResource Remove="satguruApp.DLL\bin\**" />
-    <EmbeddedResource Remove="satguruApp.DLL\obj\**" />
-    <EmbeddedResource Remove="satguruApp.Helpers\bin\**" />
-    <EmbeddedResource Remove="satguruApp.Helpers\obj\**" />
-    <EmbeddedResource Remove="satguruApp.Service\bin\**" />
-    <EmbeddedResource Remove="satguruApp.Service\obj\**" />
-    <None Remove="satguruApp.DLL\bin\**" />
-    <None Remove="satguruApp.DLL\obj\**" />
-    <None Remove="satguruApp.Helpers\bin\**" />
-    <None Remove="satguruApp.Helpers\obj\**" />
-    <None Remove="satguruApp.Service\bin\**" />
-    <None Remove="satguruApp.Service\obj\**" />
+    <Compile Remove="satguruApp.DLL\**" />
+    <Compile Remove="satguruApp.Helpers\**" />
+    <Compile Remove="satguruApp.Service\**" />
+    <Content Remove="satguruApp.DLL\**" />
+    <Content Remove="satguruApp.Helpers\**" />
+    <Content Remove="satguruApp.Service\**" />
+    <EmbeddedResource Remove="satguruApp.DLL\**" />
+    <EmbeddedResource Remove="satguruApp.Helpers\**" />
+    <EmbeddedResource Remove="satguruApp.Service\**" />
+    <None Remove="satguruApp.DLL\**" />
+    <None Remove="satguruApp.Helpers\**" />
+    <None Remove="satguruApp.Service\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -52,20 +40,25 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="satguruApp.DLL\satguruApp.DLL.csproj" />
+    <ProjectReference Include="satguruApp.Helpers\satguruApp.Helpers.csproj" />
     <ProjectReference Include="satguruApp.Service\satguruApp.Service.csproj" />
   </ItemGroup>
 
-<!--<Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
-    --><!-- Build Angular app before publish --><!--
-    <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
-    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build prod" />
-    <ItemGroup>
-      <DistFiles Include="$(SpaRoot)dist\**;$(SpaRoot)build\**" />
-      <ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
-        <RelativePath>%(DistFiles.Identity)</RelativePath>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      </ResolvedFileToPublish>
-    </ItemGroup>
-  </Target>-->
+<Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
+  <!-- As part of publishing, ensure the JS resources are freshly built in production mode -->
+  <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
+  <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build" />
+
+  <!-- Include the newly-built files in the publish output -->
+  <ItemGroup>
+    <DistFiles Include="wwwroot\**" />
+    <ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
+      <RelativePath>wwwroot\%(RecursiveDir)%(FileName)%(Extension)</RelativePath>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </ResolvedFileToPublish>
+  </ItemGroup>
+</Target>
 
 </Project>
