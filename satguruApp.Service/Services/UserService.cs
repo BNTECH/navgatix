@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using satguruApp.DLL.Models;
@@ -10,8 +11,12 @@ using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace satguruApp.Service.Services
@@ -24,8 +29,12 @@ namespace satguruApp.Service.Services
         private readonly IUserClaimsPrincipalFactory<ApplicationUser> _userClaimFactory;
         private readonly SatguruDBContext _db;
         private readonly JWT _jwt;
+        private readonly IConfiguration _configuration;
+        private static readonly object FirebaseAppLock = new();
+        private static FirebaseAdmin.FirebaseApp? _firebaseApp;
         public UserService(SatguruDBContext context, UserManager<ApplicationUser> userManager
             , IOptions<JWT> jwt
+            , IConfiguration configuration
             , RoleManager<ApplicationRole> roleManager
             , SignInManager<ApplicationUser> signInManager,
             IUserClaimsPrincipalFactory<ApplicationUser> userClaimFactory
@@ -37,6 +46,7 @@ namespace satguruApp.Service.Services
             _jwt = jwt.Value;
             _db = context;
             _userClaimFactory = userClaimFactory;
+            _configuration = configuration;
         }
         public async Task<string> UserRegisterAsync(UserViewModel model) //UserInfoViewModel
         {
@@ -69,6 +79,88 @@ namespace satguruApp.Service.Services
             {
                 return $"Email {user.Email} is already registered.";
             }
+        }
+
+        public async Task<AuthenticationViewModel> FirebaseRegisterAsync(FirebaseAuthRequestViewModel model)
+        {
+            var firebaseUser = await VerifyFirebaseTokenAsync(model.FirebaseIdToken);
+            if (firebaseUser == null)
+            {
+                return new AuthenticationViewModel
+                {
+                    IsAuthenticated = false,
+                    Message = "Invalid Firebase token.",
+                };
+            }
+
+            var localUser = await EnsureFirebaseLocalUserAsync(firebaseUser, model, allowUnverifiedEmail: true);
+            if (localUser == null)
+            {
+                return new AuthenticationViewModel
+                {
+                    IsAuthenticated = false,
+                    Message = "Unable to create local account.",
+                };
+            }
+
+            if (!string.IsNullOrWhiteSpace(model.RoleName))
+            {
+                await EnsureRoleAsync(localUser, model.RoleName);
+            }
+
+            var authModel = await BuildAuthenticationViewModelAsync(localUser);
+            authModel.EmailVerified = firebaseUser.EmailVerified;
+            authModel.IsAuthenticated = firebaseUser.EmailVerified;
+            authModel.Message = firebaseUser.EmailVerified
+                ? "Account registered successfully."
+                : "Account created. Please verify your email before logging in.";
+            return authModel;
+        }
+
+        public async Task<AuthenticationViewModel> FirebaseLoginAsync(FirebaseAuthRequestViewModel model)
+        {
+            var firebaseUser = await VerifyFirebaseTokenAsync(model.FirebaseIdToken);
+            if (firebaseUser == null)
+            {
+                return new AuthenticationViewModel
+                {
+                    IsAuthenticated = false,
+                    Message = "Invalid Firebase token.",
+                };
+            }
+
+            if (!firebaseUser.EmailVerified)
+            {
+                return new AuthenticationViewModel
+                {
+                    IsAuthenticated = false,
+                    Email = firebaseUser.Email,
+                    EmailVerified = false,
+                    Message = "Please verify your email before logging in.",
+                };
+            }
+
+            var localUser = await FindByEmailAsync(firebaseUser.Email);
+            if (localUser == null)
+            {
+                return new AuthenticationViewModel
+                {
+                    IsAuthenticated = false,
+                    Email = firebaseUser.Email,
+                    EmailVerified = true,
+                    Message = "No local account found for this Firebase user. Please sign up first.",
+                };
+            }
+
+            localUser.FirstName = string.IsNullOrWhiteSpace(model.FirstName) ? firebaseUser.FirstName : model.FirstName;
+            localUser.LastName = string.IsNullOrWhiteSpace(model.LastName) ? firebaseUser.LastName : model.LastName;
+            localUser.EmailConfirmed = firebaseUser.EmailVerified;
+            await _userManager.UpdateAsync(localUser);
+
+            var authModel = await BuildAuthenticationViewModelAsync(localUser);
+            authModel.EmailVerified = firebaseUser.EmailVerified;
+            authModel.Message = "Success";
+            return authModel;
         }
 
         public async Task<AuthenticationViewModel> GetTokenAsync(TokenRequestViewModel model)
@@ -315,6 +407,196 @@ namespace satguruApp.Service.Services
             }
             return principal;
         }
+
+        private async Task EnsureRoleAsync(ApplicationUser user, string roleName)
+        {
+            if (string.IsNullOrWhiteSpace(roleName))
+            {
+                return;
+            }
+
+            var normalizedRole = roleName.Trim();
+            var role = await _roleManager.FindByNameAsync(normalizedRole);
+            if (role == null)
+            {
+                await CreateRoles(normalizedRole);
+            }
+
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            if (!currentRoles.Any(x => x.Equals(normalizedRole, StringComparison.OrdinalIgnoreCase)))
+            {
+                await _userManager.AddToRoleAsync(user, normalizedRole);
+            }
+        }
+
+        private async Task<ApplicationUser?> EnsureFirebaseLocalUserAsync(FirebaseVerifiedUser firebaseUser, FirebaseAuthRequestViewModel model, bool allowUnverifiedEmail)
+        {
+            if (!allowUnverifiedEmail && !firebaseUser.EmailVerified)
+            {
+                return null;
+            }
+
+            var user = await FindByEmailAsync(firebaseUser.Email);
+            if (user == null)
+            {
+                var userName = string.IsNullOrWhiteSpace(model.UserName) ? firebaseUser.Email : model.UserName.Trim().ToLowerInvariant();
+                user = new ApplicationUser
+                {
+                    UserName = userName,
+                    Email = firebaseUser.Email,
+                    FirstName = string.IsNullOrWhiteSpace(model.FirstName) ? firebaseUser.FirstName : model.FirstName,
+                    LastName = string.IsNullOrWhiteSpace(model.LastName) ? firebaseUser.LastName : model.LastName,
+                    PhoneNumber = model.PhoneNumber,
+                    NormalizedEmail = firebaseUser.Email.ToUpperInvariant(),
+                    NormalizedUserName = userName.ToUpperInvariant(),
+                    IsActive = true,
+                    EmailConfirmed = firebaseUser.EmailVerified,
+                };
+
+                var createResult = await _userManager.CreateAsync(user, GenerateInternalPassword());
+                if (!createResult.Succeeded)
+                {
+                    return null;
+                }
+            }
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(model.FirstName) || !string.IsNullOrWhiteSpace(firebaseUser.FirstName))
+                {
+                    user.FirstName = string.IsNullOrWhiteSpace(model.FirstName) ? firebaseUser.FirstName : model.FirstName;
+                }
+                if (!string.IsNullOrWhiteSpace(model.LastName) || !string.IsNullOrWhiteSpace(firebaseUser.LastName))
+                {
+                    user.LastName = string.IsNullOrWhiteSpace(model.LastName) ? firebaseUser.LastName : model.LastName;
+                }
+                if (!string.IsNullOrWhiteSpace(model.PhoneNumber))
+                {
+                    user.PhoneNumber = model.PhoneNumber;
+                }
+                user.EmailConfirmed = firebaseUser.EmailVerified;
+                await _userManager.UpdateAsync(user);
+            }
+
+            return await FindByEmailAsync(firebaseUser.Email);
+        }
+
+        private async Task<AuthenticationViewModel> BuildAuthenticationViewModelAsync(ApplicationUser user)
+        {
+            var authenticationModel = new AuthenticationViewModel
+            {
+                UserInfoId = (await _db.UserInformations.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id,
+                CustomerId = (await _db.CustomerDetails.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id,
+                DriverId = (await _db.Drivers.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                UserId = user.Id,
+                AppUserId = user.AppUserId,
+                IsAuthenticated = true,
+                Email = user.Email,
+                UserName = user.UserName,
+                EmailVerified = user.EmailConfirmed,
+            };
+
+            JwtSecurityToken jwtSecurityToken = await CreateJwtToken(user);
+            authenticationModel.Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
+            var rolesList = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
+            authenticationModel.Roles = rolesList.ToList();
+            return authenticationModel;
+        }
+
+        private async Task<FirebaseVerifiedUser?> VerifyFirebaseTokenAsync(string firebaseIdToken)
+        {
+            if (string.IsNullOrWhiteSpace(firebaseIdToken))
+            {
+                return null;
+            }
+
+            var firebaseAuth = GetFirebaseAdminAuth();
+            if (firebaseAuth == null)
+            {
+                return null;
+            }
+
+            try
+            {
+                var decodedToken = await firebaseAuth.VerifyIdTokenAsync(firebaseIdToken);
+                if (!decodedToken.Claims.TryGetValue("email", out var emailClaim) ||
+                    string.IsNullOrWhiteSpace(emailClaim?.ToString()))
+                {
+                    return null;
+                }
+                var fullName = decodedToken.Claims.TryGetValue("name", out var nameClaim)
+                    ? nameClaim?.ToString() ?? string.Empty
+                    : string.Empty;
+                var names = fullName.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+
+                return new FirebaseVerifiedUser
+                {
+                    FirebaseUid = decodedToken.Uid,
+                    Email = emailClaim!.ToString()!,
+                    EmailVerified = decodedToken.Claims.TryGetValue("email_verified", out var verifiedClaim)
+                        && bool.TryParse(verifiedClaim?.ToString(), out var verified)
+                        && verified,
+                    FirstName = names.Length > 0 ? names[0] : string.Empty,
+                    LastName = names.Length > 1 ? names[1] : string.Empty,
+                };
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private FirebaseAdmin.Auth.FirebaseAuth? GetFirebaseAdminAuth()
+        {
+            var serviceAccountPath = FirebaseConfigurationHelper.ResolveServiceAccountPath(_configuration);
+            if (string.IsNullOrWhiteSpace(serviceAccountPath))
+            {
+                return null;
+            }
+
+            lock (FirebaseAppLock)
+            {
+                if (_firebaseApp == null)
+                {
+                    try
+                    {
+                        _firebaseApp = FirebaseAdmin.FirebaseApp.GetInstance("navgatix-auth");
+                    }
+                    catch
+                    {
+                        _firebaseApp = null;
+                    }
+                }
+
+                if (_firebaseApp == null)
+                {
+                    _firebaseApp = FirebaseAdmin.FirebaseApp.Create(new FirebaseAdmin.AppOptions
+                    {
+                        Credential = Google.Apis.Auth.OAuth2.GoogleCredential.FromFile(serviceAccountPath),
+                        ProjectId = _configuration["Firebase:ProjectId"],
+                    }, "navgatix-auth");
+                }
+            }
+
+            return FirebaseAdmin.Auth.FirebaseAuth.GetAuth(_firebaseApp);
+        }
+
+        private static string GenerateInternalPassword()
+        {
+            var bytes = RandomNumberGenerator.GetBytes(24);
+            return $"Ngx!{Convert.ToBase64String(bytes).Replace("/", "A").Replace("+", "B").Substring(0, 20)}1";
+        }
+
+        private sealed class FirebaseVerifiedUser
+        {
+            public string FirebaseUid { get; set; } = string.Empty;
+            public string Email { get; set; } = string.Empty;
+            public bool EmailVerified { get; set; }
+            public string FirstName { get; set; } = string.Empty;
+            public string LastName { get; set; } = string.Empty;
+        }
+
         public async Task<int> SaveContactUsSupport(ContactUsViewModel contactUs)
         {
             var contactusEntity = new ContactU

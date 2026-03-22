@@ -36,11 +36,11 @@ namespace satguruApp.Service.ViewModels
 
         public Guid? VehicleId { get; set; }
         public int? TableRowId { get; set; }
-        public string VehicleNumber { get; set; }
-        public string CttableType { get; set; }
-        public string DocType { get; set; }
+        public string? VehicleNumber { get; set; }
+        public string? CttableType { get; set; }
+        public string? DocType { get; set; }
 
-        public string DocumentUrl { get; set; }
+        public string? DocumentUrl { get; set; }
 
         public DateTime? ExpiryDate { get; set; }
 
@@ -49,10 +49,10 @@ namespace satguruApp.Service.ViewModels
 
         public int? CTTableId { get; set; }
 
-        public int CreatedBy { get; set; }
-        public IFormFile File { get; set; }
+        public int? CreatedBy { get; set; }
+        public IFormFile? File { get; set; }
 
-        public DateTime CreatedDatetime { get; set; }
+        public DateTime? CreatedDatetime { get; set; }
 
         public int? UpdatedBy { get; set; }
 
@@ -60,13 +60,13 @@ namespace satguruApp.Service.ViewModels
 
         public DateTime? EffectiveDate { get; set; }
 
-        public string DocumentName { get; set; }
+        public string? DocumentName { get; set; }
 
-        public string DocumentExt { get; set; }
+        public string? DocumentExt { get; set; }
 
-        public string DocumentPathKey { get; set; }
+        public string? DocumentPathKey { get; set; }
 
-        public string DocumentPath { get; set; }
+        public string? DocumentPath { get; set; }
 
         public byte[] DocStream { get; set; }
 
@@ -80,9 +80,9 @@ namespace satguruApp.Service.ViewModels
 
         public bool? Form312 { get; set; }
 
-        public string Comment { get; set; }
+        public string? Comment { get; set; }
 
-        public IFormFile UploadFile
+        public IFormFile? UploadFile
         {
             get; set;
         }

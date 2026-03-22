@@ -22,5 +22,7 @@ namespace satguruApp.Service.ViewModels
         public string? Token { get; set; }
         public string? LastName { get; set; }
         public string? FirstName { get; set; }
+        public bool EmailVerified { get; set; }
+        public bool IsNewUser { get; set; }
     }
 }

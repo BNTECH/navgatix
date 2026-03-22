@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNet.Identity;
-using satguruApp.DLL.Models;
+﻿using satguruApp.DLL.Models;
 using satguruApp.Service.Services.Interfaces;
 using satguruApp.Service.ViewModels;
 using System;
@@ -78,3 +77,4 @@ namespace satguruApp.Service.Services
 
     }
 }
+

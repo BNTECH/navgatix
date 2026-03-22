@@ -1,4 +1,4 @@
-﻿using satguruApp.DLL.Models;
+using satguruApp.DLL.Models;
 using satguruApp.Service.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -14,5 +14,8 @@ namespace satguruApp.Service.Services.Interfaces
         Task<int> SaveTransporterAsync(TransporterViewModel driverInfo);
         Task<DriverViewModel> GetDriverDetails(string userId);
         Task<TransporterViewModel> GetTransporterDetails(string userId);
+        Task<int> SaveDriverKYCAsync(DriverKYCViewModel kycInfo);
+        Task<List<DriverKYCViewModel>> GetDriverKYCAsync(Guid driverId);
+        Task<int> UpdateProfileStatusAsync(Guid driverId, string status);
     }
 }

@@ -1,4 +1,4 @@
-﻿using satguruApp.DLL.Models;
+using satguruApp.DLL.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,9 +14,9 @@ namespace satguruApp.Service.ViewModels
         {
             Id = model.Id,
             VehicleNumber = model.VehicleNumber,
+            VehicleName = model.VehicleName,
             TransporterId = model.TransporterId.GetValueOrDefault(),
             CT_VehicleType = model.CT_VehicleType.GetValueOrDefault(),
-            //TransporterName =model.Transporter.c // model.Transporter.FirstName + (!string.IsNullOrEmpty(model.Transporter.LastName) ? model.Transporter.LastName : string.Empty),
             CapacityTons = model.CapacityTons,
             SizeCubicMeters = model.SizeCubicMeters,
             RCNumber = model.RCNumber,
@@ -28,7 +28,7 @@ namespace satguruApp.Service.ViewModels
             UploadPhoneUrl = model.UploadPhoneUrl,
             IsAvailable = model.IsAvailable,
             CTBodyType = model.CTBodyType,
-            
+            CTTyreType = model.CTTyreType,
             IsDeleted = model.IsDeleted
         };
 
@@ -39,6 +39,7 @@ namespace satguruApp.Service.ViewModels
         public string? TransporterName { get; set; }
 
         public string? VehicleNumber { get; set; }
+        public string? VehicleName { get; set; }
 
         public string? VehicleTypeName { get; set; }
         public int? CT_VehicleType { get; set; }
@@ -66,6 +67,8 @@ namespace satguruApp.Service.ViewModels
         public bool? IsDeleted { get; set; }
         public int? CTBodyType { get; set; }
         public string? BodyTypeName { get; set; }
+        public int? CTTyreType { get; set; }
+        public string? TyreTypeName { get; set; }
         public string? Message { get; set; }
 
         public virtual ICollection<BookingViewModel> Bookings { get; set; } = new List<BookingViewModel>();
@@ -78,9 +81,9 @@ namespace satguruApp.Service.ViewModels
         public void ModelMapTo(Vehicle model) {
             model.Id = Id;
             model.VehicleNumber = VehicleNumber;
+            model.VehicleName = VehicleName;
             model.TransporterId = TransporterId;
             model.CT_VehicleType = CT_VehicleType;
-           // model.VehicleType = VehicleTypeName;
             model.CapacityTons = CapacityTons;
             model.SizeCubicMeters = SizeCubicMeters;
             model.RCNumber = RCNumber;
@@ -92,6 +95,7 @@ namespace satguruApp.Service.ViewModels
             model.UploadPhoneUrl = UploadPhoneUrl;
             model.IsAvailable = IsAvailable;
             model.CTBodyType = CTBodyType;
+            model.CTTyreType = CTTyreType;
         }
     }
 

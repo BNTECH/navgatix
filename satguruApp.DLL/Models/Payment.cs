@@ -11,11 +11,11 @@ public partial class Payment
 
     public decimal? Amount { get; set; }
 
-    public string PaymentMode { get; set; }
+    public string? PaymentMode { get; set; }
 
-    public string PaymentStatus { get; set; }
+    public string? PaymentStatus { get; set; }
 
-    public string TransactionReference { get; set; }
+    public string? TransactionReference { get; set; }
 
     public DateTime? PaidAt { get; set; }
 

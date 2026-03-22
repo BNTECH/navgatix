@@ -14,6 +14,8 @@ namespace satguruApp.Service.Services.Interfaces
         public Task<AuthenticationViewModel> GetTokenAsync(TokenRequestViewModel model);
         public Task<string> UpdateUserRoleAsync(RoleViewModel model);
         public Task<AuthenticationViewModel> Login(LoginViewModel model);
+        public Task<AuthenticationViewModel> FirebaseRegisterAsync(FirebaseAuthRequestViewModel model);
+        public Task<AuthenticationViewModel> FirebaseLoginAsync(FirebaseAuthRequestViewModel model);
         public Task<ApplicationUser> FindUserByUserName(string userName);
         public Task<ApplicationUser> FindUserByUserId(string userId);
         public Task<ApplicationUser> FindByEmailAsync(string email);

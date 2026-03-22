@@ -7,9 +7,9 @@ public partial class SystemConfiguration
 {
     public int Id { get; set; }
 
-    public string Field { get; set; }
+    public string? Field { get; set; }
 
-    public string Value { get; set; }
+    public string? Value { get; set; }
 
     public bool IsDeleted { get; set; }
 
@@ -21,7 +21,7 @@ public partial class SystemConfiguration
 
     public DateTime? UpdateDatetime { get; set; }
 
-    public string FieldText { get; set; }
+    public string? FieldText { get; set; }
 
     public int? CTTableId { get; set; }
 

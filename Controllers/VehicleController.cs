@@ -40,7 +40,7 @@ namespace navgatix.Controllers
         }
         [AllowAnonymous]
         [HttpGet("deletevehicle/{vehicleId}/{status}")]
-        public async Task<IActionResult> Deletevehicle(Guid vehicleId, bool status)
+        public async Task<IActionResult> Deletevehicle(Guid vehicleId, bool status=false)
         {
             return Ok(await _vehicleService.Delete(vehicleId, status));
         }
@@ -49,6 +49,36 @@ namespace navgatix.Controllers
         public async Task<IActionResult> BookOfVehicle([FromBody] BookingViewModel model)
         {
             return Ok(await _vehicleService.BookingVehicle(model));
+        }
+        [HttpPost("matchDriversAndRequestRide")]
+        [AllowAnonymous]
+        public async Task<IActionResult> MatchDriversAndRequestRide([FromBody] RideMatchingRequestViewModel model)
+        {
+            return Ok(await _vehicleService.MatchDriversAndSendRideRequestAsync(model));
+        }
+        [HttpPost("requestRide")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RequestRide([FromBody] BookingViewModel model)
+        {
+            return Ok(await _vehicleService.RequestRideAsync(model));
+        }
+        [HttpPatch("{bookingId}/rideStatus")]
+        [AllowAnonymous]
+        public async Task<IActionResult> UpdateRideStatus(long bookingId, [FromQuery] string status, [FromQuery] Guid? driverId = null)
+        {
+            return Ok(await _vehicleService.UpdateRideStatusAsync(bookingId, status, driverId));
+        }
+        [HttpPatch("{bookingId}/rideRequest/reject")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RejectRideRequest(long bookingId, [FromQuery] string driverUserId)
+        {
+            return Ok(await _vehicleService.RejectRideRequestAsync(bookingId, driverUserId));
+        }
+        [HttpGet("ride/{bookingId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetRide(long bookingId)
+        {
+            return Ok(await _vehicleService.GetRideAsync(bookingId));
         }
         [HttpPost("cancelbookingVehicleride")]
         [AllowAnonymous]
@@ -62,6 +92,18 @@ namespace navgatix.Controllers
         {
             return Ok(await _vehicleService.BookingVehicleRides(userId));
         }
+        [HttpGet("driverRides/{driverUserId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetDriverRides(string driverUserId)
+        {
+            return Ok(await _vehicleService.GetDriverRidesAsync(driverUserId));
+        }
+        [HttpGet("driverRideRequests/{driverUserId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetDriverRideRequests(string driverUserId)
+        {
+            return Ok(await _vehicleService.GetDriverRideRequestsAsync(driverUserId));
+        }
         [HttpPost("saveLiveVehicleTracking")]
         [AllowAnonymous]
         public async Task<IActionResult> SaveLiveVehicleTracking([FromBody] LiveVehicleTrackingViewModel liveVehicle)
@@ -70,9 +112,16 @@ namespace navgatix.Controllers
         }
         [HttpPost("getLiveVehicleTracking")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetLiveVehicleTracking(Guid vehicleId, string deviceId)
+        public async Task<IActionResult> GetLiveVehicleTracking([FromQuery] Guid vehicleId, [FromQuery] string deviceId)
         {
             return Ok(await _vehicleService.GetLiveVehicleTrackings(vehicleId, deviceId));
+        }
+
+        [HttpGet("tracking/{bookingId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetTrackingSnapshot(long bookingId)
+        {
+            return Ok(await _vehicleService.GetTrackingSnapshotAsync(bookingId));
         }
     }
 }

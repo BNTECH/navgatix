@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using satguruApp.DLL.Models;
 using satguruApp.Service.Services.Interfaces;
 using satguruApp.Service.ViewModels;
@@ -9,6 +11,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using static Google.Apis.Auth.OAuth2.Web.AuthorizationCodeWebApp;
 
 
 namespace navgatix.Controllers
@@ -22,18 +25,20 @@ namespace navgatix.Controllers
         private readonly IUserInfoService _userInfoService;
         private readonly ITransportService _transportService;
         private readonly IAppCustormer _appCustormer;
-        private string subPath = @"~/uploaddocs/";
+        private readonly IVehicleService _vehicleService;
+        private string subPath = @"wwwroot/uploads/profiles/";
         private static readonly string[] Summaries = new[]
       {
         "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
     };
-        public UserController(IUserService userService, IAccountTypeService accountTypeService, IUserInfoService userInfoService, ITransportService transportService, IAppCustormer appCustormer)
+        public UserController(IUserService userService, IAccountTypeService accountTypeService, IUserInfoService userInfoService, ITransportService transportService, IAppCustormer appCustormer, IVehicleService vehicleService)
         {
             _userService = userService;
             _accountTypeService = accountTypeService;
             _userInfoService = userInfoService;
             _transportService = transportService;
             _appCustormer = appCustormer;
+            _vehicleService = vehicleService;
         }
         // GET: UserController
         [HttpPost]
@@ -73,7 +78,7 @@ namespace navgatix.Controllers
             switch (model.RoleName)
             {
                 case "Driver": await _transportService.SaveDriverAsync(new DriverViewModel { UserId = model.UserId, FirstName = model.FirstName, MiddleName = model.MiddleName, LastName = model.LastName, Mobile = model.Mobile, TransporterId = model.TransporterId, DOB = model.DOB, Gender = model.Gender, LicenseExpiry = model.LicenseExpiry, LicenseNumber = model.LicenseNumber, ProfilePic = model.ProfilePic }); break;
-                case "Transporter": await _transportService.SaveTransporterAsync(new TransporterViewModel { UserId = model.UserId, FirstName = model.FirstName, MiddleName = model.MiddleName, LastName = model.LastName, Mobile = model.Mobile, DOB = model.DOB, Gender = model.Gender, LicenseExpiry = model.LicenseExpiry, LicenseNumber = model.LicenseNumber, ProfilePic = model.ProfilePic, GSTNumber = model.GSTNumber, PANNumber = model.PANNumber, BankAccountNumber = model.BankAccountNumber, IFSCCode = model.IFSCCode, ProfileVerified = model.ProfileVerified }); break;
+                case "Transporter": await _transportService.SaveTransporterAsync(new TransporterViewModel { UserId = model.UserId, FirstName = model.FirstName, MiddleName = model.MiddleName, LastName = model.LastName, Mobile = model.Mobile, DOB = model.DOB, Gender = model.Gender, LicenseExpiry = model.LicenseExpiry, LicenseNumber = model.LicenseNumber, ProfilePic = model.ProfilePic, GSTNumber = model.GSTNumber, BankAccountNumber = model.BankAccountNumber, IFSCCode = model.IFSCCode, ProfileVerified = model.ProfileVerified }); break;
                 case "Customer":
                     await _appCustormer.SaveChangeAsync(new CustomerDetailViewModel { UserId = model.UserId, GSTNumber = model.GSTNumber, CompanyName = !string.IsNullOrEmpty(model.Company) ? model.Company : model.FirstName + " " + model.LastName, City = model.City, State = model.State, Pincode = model.Pincode, Address = model.Address });
                     break;
@@ -88,9 +93,9 @@ namespace navgatix.Controllers
         [AllowAnonymous]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
-        public async Task<IActionResult> UploadProfilePic([FromBody] UserProfilePicViewModel userProfile)
+        public async Task<IActionResult> UploadProfilePic([FromForm] UserProfilePicViewModel userProfile)
         {
-            var uploadFolder = Path.Combine(subPath);
+            var uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), subPath);
 
             if (!Directory.Exists(uploadFolder))
                 Directory.CreateDirectory(uploadFolder);
@@ -98,14 +103,16 @@ namespace navgatix.Controllers
             var uniqueFileName = $"{userProfile.UserId}_{DateTime.Now.Ticks}_{userProfile.File.FileName}";
             var filePath = Path.Combine(uploadFolder, uniqueFileName);
 
-            var userResult = await _userInfoService.UpdateProfilePic(userProfile.UserId.ToString(), filePath);
+            var relativePath = $"/uploads/profiles/{uniqueFileName}";
+
+            var userResult = await _userInfoService.UpdateProfilePic(userProfile.UserId.ToString(), relativePath);
 
             // Save file
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 await userProfile.File.CopyToAsync(stream);
             }
-            userProfile.ProfilePic = filePath;
+            userProfile.ProfilePic = relativePath;
             return Ok(userProfile);
 
         }
@@ -152,29 +159,181 @@ namespace navgatix.Controllers
         public async Task<IActionResult> UpdateDriveDetail([FromBody] DriverViewModel model)
         {
             var user = await _userService.FindUserByUserId(model.UserId);
-            _userService.UpdateUser(new UserViewModel { UserName = user.UserName, Email = user.Email, FirstName = user.FirstName, LastName = user.LastName, PhoneNumber = user.PhoneNumber, DOB = model.DOB });
+            if (user == null) return NotFound("User not found");
+
+            // Update Identity User basic details
+            await _userService.UpdateUser(new UserViewModel 
+            { 
+                UserName = user.UserName, 
+                Email = user.Email, 
+                FirstName = model.FirstName ?? user.FirstName, 
+                LastName = model.LastName ?? user.LastName, 
+                PhoneNumber = model.PhoneNumber ?? user.PhoneNumber, 
+                DOB = model.DOB 
+            });
+
+            // Update UserInformation (Personal Profile)
+            var userInfo = new UserInfoViewModel
+            {
+                UserId = model.UserId,
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                PhoneNumber = model.PhoneNumber,
+                Mobile = model.Mobile,
+                DOB = model.DOB,
+                ProfilePic = model.ProfilePic,
+                GenderId = model.GenderId,
+                Address = model.WhatsAppLink, // Using WhatsAppLink as placeholder for address
+                Description = model.PANCardUrl != null ? $"PAN_URL:{model.PANCardUrl}" : null
+            };
+            await _userInfoService.SaveAsync(userInfo);
+
+            // Update Driver Detail
             var result = await _transportService.SaveDriverAsync(model);
+            var driverDetails = await _transportService.GetDriverDetails(model.UserId);
+            var driverId = driverDetails?.Id ?? Guid.Empty;
+
+            // Handle Vehicle Details
+            if (!string.IsNullOrEmpty(model.VehicleNumber) && !string.IsNullOrEmpty(model.VehicleName))
+            {
+                var vehicleVM = new VehicleViewModel
+                {
+                    TransporterId = model.TransporterId.GetValueOrDefault(),
+                    VehicleName = model.VehicleName,
+                    VehicleNumber = model.VehicleNumber.ToUpper(),
+                    CT_VehicleType = model.CT_VehicleType,
+                    CTBodyType = model.CTBodyType,
+                    CTTyreType = model.CTTyreType,
+                    IsAvailable = true
+                };
+                await _vehicleService.SaveVehicleAsync(vehicleVM);
+            }
+
+            // Mandatory Field Validation for Profile Completion
+            bool isLicensePresent = !string.IsNullOrEmpty(model.LicenseNumber);
+            bool isVehiclePresent = !string.IsNullOrEmpty(model.VehicleNumber) && !string.IsNullOrEmpty(model.VehicleName);
+            
+            var kycRecords = await _transportService.GetDriverKYCAsync(driverId);
+            bool isAadhaarDone = kycRecords.Any(x => x.DocumentType == "Aadhaar");
+
+            if (isLicensePresent && isVehiclePresent && isAadhaarDone)
+            {
+                await _transportService.UpdateProfileStatusAsync(driverId, "Completed");
+            }
+            else
+            {
+                await _transportService.UpdateProfileStatusAsync(driverId, "Incomplete");
+                
+                // If this was an explicit finalize attempt, return errors
+                if (model.Status == "Finalizing")
+                {
+                    var missing = new List<string>();
+                    if (!isLicensePresent) missing.Add("Driving licence number");
+                    if (!isVehiclePresent) missing.Add("Vehicle details");
+                    if (!isAadhaarDone) missing.Add("Aadhaar document upload");
+                    return BadRequest($"Mandatory fields missing: {string.Join(", ", missing)}");
+                }
+            }
+
             return Ok(result);
         }
-        [HttpPost("updateTransporterDetail")]
-        [AllowAnonymous]
-        public async Task<IActionResult> UpdateTransporterDetail([FromBody] TransporterViewModel model)
-        {
-            var user = await _userService.FindUserByUserId(model.UserId);
-            _userService.UpdateUser(new UserViewModel { UserName = user.UserName, Email = user.Email, FirstName = user.FirstName, LastName = user.LastName, PhoneNumber = user.PhoneNumber, DOB = model.DOB });
-            var result = await _transportService.SaveTransporterAsync(model); return Ok(result);
-        }
+
         [HttpPost("updateCustomerDetail")]
         [AllowAnonymous]
         public async Task<IActionResult> UpdateCustomerDetail([FromBody] CustomerDetailViewModel model)
         {
             var user = await _userService.FindUserByUserId(model.UserId);
-            _userService.UpdateUser(new UserViewModel { UserName = user.UserName, Email = user.Email, FirstName = user.FirstName, LastName = user.LastName, PhoneNumber = user.PhoneNumber });
-            var result = _appCustormer.SaveChangeAsync(model);
+            if (user == null) return NotFound("User not found");
+
+            // Update Identity User basic details
+            var names = model.Name?.Split(' ');
+            var firstName = names?.Length > 0 ? names[0] : user.FirstName;
+            var lastName = names?.Length > 1 ? string.Join(" ", names.Skip(1)) : user.LastName;
+
+            await _userService.UpdateUser(new UserViewModel 
+            { 
+                UserName = user.UserName, 
+                Email = user.Email, 
+                FirstName = firstName, 
+                LastName = lastName, 
+                PhoneNumber = model.Phone ?? user.PhoneNumber 
+            });
+
+            // Update UserInformation
+            await _userInfoService.SaveAsync(new UserInfoViewModel
+            {
+                UserId = model.UserId,
+                FirstName = firstName,
+                LastName = lastName,
+                PhoneNumber = model.Phone,
+                ProfilePic = model.ProfilePic,
+                Address = model.Address,
+                City = model.City,
+                State = model.State,
+                Pincode = model.Pincode
+            });
+
+            // Update Customer Detail record (simplifies internal state)
+            model.CompanyName = null; // Remove company info for simple customers
+            model.GSTNumber = null;
+            var result = await _appCustormer.SaveChangeAsync(model);
             return Ok(result);
         }
 
 
+
+        [HttpPost("updateTransporterDetail")]
+        [AllowAnonymous]
+        public async Task<IActionResult> UpdateTransporterDetail([FromBody] TransporterViewModel model)
+        {
+            var user = await _userService.FindUserByUserId(model.UserId);
+            if (user == null) return NotFound("User not found");
+
+            await _userService.UpdateUser(new UserViewModel 
+            { 
+                UserName = user.UserName, 
+                Email = user.Email, 
+                FirstName = model.FirstName ?? user.FirstName, 
+                LastName = model.LastName ?? user.LastName, 
+                PhoneNumber = model.PhoneNumber ?? user.PhoneNumber, 
+                DOB = model.DOB 
+            });
+
+            var result = await _transportService.SaveTransporterAsync(model);
+            return Ok(result);
+        }
+
+        [HttpPost("uploadDriverKYC")]
+        [AllowAnonymous]
+        public async Task<IActionResult> UploadDriverKYC([FromForm] Guid driverId, [FromForm] string documentType, [FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0) return BadRequest("File is empty");
+
+            var ext = Path.GetExtension(file.FileName).ToLower();
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".pdf", ".doc", ".docx" };
+            if (!allowedExtensions.Contains(ext)) return BadRequest("Invalid file format");
+
+            var uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/kyc");
+            if (!Directory.Exists(uploadFolder)) Directory.CreateDirectory(uploadFolder);
+
+            var fileName = $"{driverId}_{documentType}_{DateTime.Now.Ticks}{ext}";
+            var filePath = Path.Combine(uploadFolder, fileName);
+            var relativePath = $"/uploads/kyc/{fileName}";
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var kycResult = await _transportService.SaveDriverKYCAsync(new DriverKYCViewModel
+            {
+                DriverId = driverId,
+                DocumentType = documentType,
+                DocumentUrl = relativePath
+            });
+
+            return Ok(new { DocumentUrl = relativePath });
+        }
 
         [HttpPost("createToken")]
         [AllowAnonymous]
@@ -195,6 +354,52 @@ namespace navgatix.Controllers
         public async Task<IActionResult> Login([FromBody] LoginViewModel model)
         {
             var result = await _userService.Login(model);
+            return Ok(result);
+        }
+        [HttpPost("firebaseRegister")]
+        [AllowAnonymous]
+        public async Task<IActionResult> FirebaseRegister([FromBody] FirebaseAuthRequestViewModel model)
+        {
+            model.RoleName = model.RoleName == "Logistics" ? "Customer" : model.RoleName;
+            var result = await _userService.FirebaseRegisterAsync(model);
+            if (string.IsNullOrWhiteSpace(result.UserId) || string.IsNullOrWhiteSpace(model.RoleName))
+            {
+                return Ok();
+            }
+
+            var accountType = await _accountTypeService.GetById(0, model.RoleName);
+            var userInfoModel = new UserInfoViewModel
+            {
+                UserId = result.UserId,
+                RoleName = model.RoleName,
+                AccountTypeId = accountType?.Id,
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                Email = result.Email ?? model.Email,
+                UserName = result.UserName ?? model.UserName ?? model.Email,
+                PhoneNumber = model.PhoneNumber,
+                Company = model.Company,
+                GSTNumber = model.GSTNumber,
+                DOB = model.DOB,
+                AppUserId = result.AppUserId ?? 0,
+            };
+
+            await _userInfoService.SaveAsync(userInfoModel);
+
+            if (!result.IsAuthenticated && !result.EmailVerified)
+            {
+                await SyncFirebaseProfileAsync(model, result);
+                return Ok(result);
+            }
+
+            await SyncFirebaseProfileAsync(model, result);
+            return Ok(result);
+        }
+        [HttpPost("firebaseLogin")]
+        [AllowAnonymous]
+        public async Task<IActionResult> FirebaseLogin([FromBody] FirebaseAuthRequestViewModel model)
+        {
+            var result = await _userService.FirebaseLoginAsync(model);
             return Ok(result);
         }
         [HttpGet("getRole")]
@@ -288,10 +493,22 @@ namespace navgatix.Controllers
             switch (model.AccountTypeName)
             {
                 case "Driver":
-                    var driverdetail = _transportService.GetDriverDetails(userId);
+                    var driverdetail = await _transportService.GetDriverDetails(userId);
+                    if (driverdetail != null)
+                    {
+                        model.LicenseNumber = driverdetail.LicenseNumber;
+                        model.LicenseExpiry = driverdetail.LicenseExpiry;
+                    }
                     break;
                 case "Transporter":
-                    var transportDetail = _transportService.GetTransporterDetails(userId);
+                    var transportDetail = await _transportService.GetTransporterDetails(userId);
+                    if (transportDetail != null)
+                    {
+                        model.BankAccountNumber = transportDetail.BankAccountNumber;
+                        model.IFSCCode = transportDetail.IFSCCode;
+                        model.GSTNumber = transportDetail.GSTNumber;
+                        model.ProfileVerified = transportDetail.ProfileVerified;
+                    }
                     break;
                 case "Customer": break;
                 default:
@@ -322,8 +539,50 @@ namespace navgatix.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> ContactSupport([FromBody] ContactUsViewModel contactUsView)
         {
+            var result = await _userService.FindByEmailAsync(contactUsView.EmailId);
+            contactUsView.UserId = result.Id;
             var model = await _userService.SaveContactUsSupport(contactUsView);
             return Ok(model);
+        }
+
+        private async Task SyncFirebaseProfileAsync(FirebaseAuthRequestViewModel model, AuthenticationViewModel authResult)
+        {
+            
+
+            switch (model.RoleName)
+            {
+                case "Driver":
+                    await _transportService.SaveDriverAsync(new DriverViewModel
+                    {
+                        UserId = authResult.UserId,
+                        FirstName = model.FirstName,
+                        LastName = model.LastName,
+                        PhoneNumber = model.PhoneNumber,
+                    });
+                    break;
+                case "Transporter":
+                    await _transportService.SaveTransporterAsync(new TransporterViewModel
+                    {
+                        UserId = authResult.UserId,
+                        FirstName = model.FirstName,
+                        LastName = model.LastName,
+                        PhoneNumber = model.PhoneNumber,
+                        GSTNumber = model.GSTNumber,
+                        CompanyName = model.Company,
+                    });
+                    break;
+                case "Logistics":
+                case "Customer":
+                    await _appCustormer.SaveChangeAsync(new CustomerDetailViewModel
+                    {
+                        UserId = authResult.UserId,
+                        GSTNumber = model.GSTNumber,
+                        CompanyName = string.IsNullOrWhiteSpace(model.Company)
+                            ? $"{model.FirstName} {model.LastName}".Trim()
+                            : model.Company,
+                    });
+                    break;
+            }
         }
 
 

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -10,6 +10,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
+using navgatix.Hubs;
+using navgatix.Services;
+using navgatix.SeedData;
 using satguruApp.DLL.Models;
 using satguruApp.Service;
 using satguruApp.Service.Services;
@@ -36,7 +39,7 @@ namespace navgatix
         }
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<SatguruDBContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+
             services.AddDbContext<SatguruDBContext>(options =>
                    options.UseSqlServer(
                        Configuration.GetConnectionString("DefaultConnection"),
@@ -63,6 +66,12 @@ namespace navgatix
             services.AddScoped<IStateService, StateService>();
             services.AddScoped<ICityService, CityService>();
             services.AddScoped<ISystemConfigurationService, SystemConfigurationService>();
+            services.AddScoped<IDriverFinanceService, DriverFinanceService>();
+            services.AddScoped<IDisputeService, DisputeService>();
+            services.AddScoped<IFirebasePushService, FirebasePushService>();
+            services.AddScoped<ILocationService, LocationService>();
+            services.AddScoped<ITrackingNotificationService, TrackingNotificationService>();
+            services.AddSignalR();
 
 
             services.AddAuthentication(options =>
@@ -105,9 +114,25 @@ namespace navgatix
                 };
 
             });
-            services.AddCors();
+            
+            // Allow local frontend dev servers to access the API
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowReactApp", policy =>
+                {
+                    policy.WithOrigins("http://localhost:5006", "http://localhost:5173", "http://localhost:3000")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials(); // Important if using cookies/tokens
+                });
+            });
+
             services.AddControllers();
             services.AddControllersWithViews();
+            services.AddSpaStaticFiles(configuration =>
+            {
+                configuration.RootPath = "ClientApp/clientApp/dist/client-app/browser";
+            });
             services.AddEndpointsApiExplorer();
             // ✅ Add Swagger
             services.AddSwaggerGen(c =>
@@ -118,43 +143,33 @@ namespace navgatix
         }
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            app.UseDeveloperExceptionPage();
-            app.UseStaticFiles();
-            AppDomain.CurrentDomain.FirstChanceException += (sender, e) =>
+            if (env.IsDevelopment())
             {
-                if (e.Exception is ReflectionTypeLoadException rtlEx)
-                {
-                    foreach (var loaderException in rtlEx.LoaderExceptions)
-                    {
-                        Console.WriteLine(loaderException.Message);
-                    }
-                }
-            };
+                app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                app.UseExceptionHandler("/Home/Error");
+                app.UseHsts();
+            }
 
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
+            
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
                 c.RoutePrefix = "swagger";
             });
-                app.UseExceptionHandler("/Home/Error");
-                app.UseHsts();
 
             app.UseHttpsRedirection();
             app.UseRouting();
+
+            app.UseCors("AllowReactApp");
+
             app.UseAuthentication();
             app.UseAuthorization();
-
-
-
-            app.UseHttpsRedirection();
-            app.UseStaticFiles();
-
-            app.UseRouting();
-
-            app.UseAuthorization();
-            app.UseSwagger();
-
 
             app.UseEndpoints(endpoints =>
             {
@@ -162,17 +177,13 @@ namespace navgatix
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapControllers();
+                endpoints.MapHub<LocationHub>("/hubs/location");
+                
+                // Fallback to index.html for SPA
+                endpoints.MapFallbackToFile("index.html");
             });
 
-            app.UseSpa(spa =>
-            {
-                spa.Options.SourcePath = "clientApp";
-
-                if (env.IsDevelopment())
-                {
-                    spa.UseAngularCliServer(npmScript: "start");
-                }
-            });
+            CommonTypeSeeder.Seed(app.ApplicationServices);
 
         }
     }

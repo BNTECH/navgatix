@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using satguruApp.DLL.Models;
 using System;
 using System.Collections.Generic;
@@ -48,7 +48,6 @@ namespace satguruApp.Service.ViewModels
         public string? ProfilePic { get; set; }
         public string? IFSCCode { get; set; }
         public string? BankAccountNumber { get; set; }
-        public string? PANNumber { get; set; }
         public string? GSTNumber { get; set; }
         public bool? ProfileVerified { get; set; }
         public string? City { get; set; }

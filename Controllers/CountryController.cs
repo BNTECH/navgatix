@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using satguruApp.Service.Services;
 using satguruApp.Service.Services.Interfaces;
@@ -17,7 +17,7 @@ namespace navgatix.Controllers
         {
             _countryService = countryService;
         }
-        [HttpGet("/getall")]
+        [HttpGet("getall")]
         [AllowAnonymous]
         public async Task<IActionResult> GetAll(string name = "")
         {

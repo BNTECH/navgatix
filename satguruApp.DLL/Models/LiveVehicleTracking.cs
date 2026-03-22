@@ -10,6 +10,7 @@ public partial class LiveVehicleTracking
     public bool? IsDeleted { get; set; }
 
     public Guid? VehicleId { get; set; }
+    public string UserId { get; set; }
 
     public decimal? LastLatitude { get; set; }
 

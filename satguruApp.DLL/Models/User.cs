@@ -75,6 +75,8 @@ public partial class User
 
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
+    public virtual ICollection<PushDeviceToken> PushDeviceTokens { get; set; } = new List<PushDeviceToken>();
+
     public virtual ICollection<TransporterDetail> TransporterDetails { get; set; } = new List<TransporterDetail>();
 
     public virtual ICollection<UserLogin> UserLogins { get; set; } = new List<UserLogin>();

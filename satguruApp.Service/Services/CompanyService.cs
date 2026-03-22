@@ -48,7 +48,7 @@ namespace satguruApp.Service.Services
             }
             var type = await _db.CommonTypes.Where(x => x.Code == "CTYP").Select(x => x.Id).FirstOrDefaultAsync();
             var results = (from dbModel in _db.Companies
-                           join addr in _db.Addresses.Where(a => !a.Is_Deleted.GetValueOrDefault() && a.Ct_Table_Id == type) on dbModel.ID equals addr.Table_Row_Id into temp
+                           join addr in _db.Addresses.Where(a => a.Is_Deleted != true && a.Ct_Table_Id == type) on dbModel.ID equals addr.Table_Row_Id into temp
                            from addr in temp.DefaultIfEmpty()
                            select new CompanyViewModel
                            {
@@ -145,7 +145,7 @@ namespace satguruApp.Service.Services
                             string address = newAddr.Address1 + newAddr.Zip_Code + newAddr.City_Id + StateName;
                             var res = _address.GetdtLatLong(address);
                             await _db.SaveChangesAsync();
-                            var recAdd = await _db.Addresses.Where(x => x.Table_Row_Id == VMModel.Id && x.Ct_Table_Id == type && !x.Is_Deleted.GetValueOrDefault()).FirstOrDefaultAsync();
+                            var recAdd = await _db.Addresses.Where(x => x.Table_Row_Id == VMModel.Id && x.Ct_Table_Id == type && x.Is_Deleted != true).FirstOrDefaultAsync();
                             if (recAdd != null)
                             {
                                 VMModel.RKUpateTo(recAdd);
@@ -177,14 +177,14 @@ namespace satguruApp.Service.Services
         {
             return await (from a in _db.DivisionPayrollCycles
                           join com in _db.CommonTypes on a.CTPayrollCycleId equals com.Id
-                          where !a.IsDeleted.GetValueOrDefault() && a.DivisionId == id
+                          where a.IsDeleted != true && a.DivisionId == id
                           select new PayrollPayCycleList { id = com.Id, name = com.Name }).OrderBy(x => x.name).ToListAsync();
         }
         public async Task<List<PayrollPayCycleList>> GetCompanyCodes(int id)
         {
             return await (from a in _db.CompanyCodeDetails
                           join com in _db.CompanyCodes on a.CompanyCodeId equals com.Id
-                          where !a.IsDeleted.GetValueOrDefault() && a.TableRowId == id
+                          where a.IsDeleted != true && a.TableRowId == id
                           select new PayrollPayCycleList { id = com.Id, name = com.Name }).OrderBy(x => x.name).ToListAsync();
         }
         public async Task<CompanyEditViewModel> GetCompanyDetailsById(int companyId)
@@ -261,11 +261,11 @@ namespace satguruApp.Service.Services
             record.CompanyCodes = await GetCompanyCodes(record.ID);
             record.PayrollCyclesName = string.Join(", ", (from a in _db.DivisionPayrollCycles
                                                           join b in _db.CommonTypes on a.CTPayrollCycleId equals b.Id
-                                                          where a.DivisionId == record.ID && !a.IsDeleted.GetValueOrDefault()
+                                                          where a.DivisionId == record.ID && a.IsDeleted != true
                                                           select b.Name));
             record.CompanyCodesName = string.Join(", ", (from a in _db.CompanyCodeDetails
                                                          join b in _db.CompanyCodes on a.CompanyCodeId equals b.Id
-                                                         where a.TableRowId == record.ID && !a.IsDeleted.GetValueOrDefault()
+                                                         where a.TableRowId == record.ID && a.IsDeleted != true
                                                          select b.Name));
             return record;
         }
@@ -295,7 +295,7 @@ namespace satguruApp.Service.Services
                         string address = newAddr.Address1 + newAddr.Zip_Code + newAddr.City_Id + StateName;
                         var res = _address.GetdtLatLong(address);
                         await _db.SaveChangesAsync();
-                        var recAdd = await _db.Addresses.Where(x => x.Table_Row_Id == model.Id && x.Ct_Table_Id == type && !x.Is_Deleted.GetValueOrDefault()).FirstOrDefaultAsync();
+                        var recAdd = await _db.Addresses.Where(x => x.Table_Row_Id == model.Id && x.Ct_Table_Id == type && x.Is_Deleted != true).FirstOrDefaultAsync();
                         if (recAdd != null)
                         {
                             model.RKUpateTo(recAdd);
@@ -325,7 +325,7 @@ namespace satguruApp.Service.Services
 
             var type = await _db.CommonTypes.Where(x => x.Code == "CTYP").Select(x => x.Id).FirstOrDefaultAsync();
             return await (from dbModel in _db.Companies.Where(b => b.ID == id)
-                          join addr in _db.Addresses.Where(a => !a.Is_Deleted.GetValueOrDefault() && a.Ct_Table_Id == type) on dbModel.ID equals addr.Table_Row_Id into temp
+                          join addr in _db.Addresses.Where(a => a.Is_Deleted != true && a.Ct_Table_Id == type) on dbModel.ID equals addr.Table_Row_Id into temp
                           from addr in temp.DefaultIfEmpty()
                           select new CompanyViewModel
                           {
@@ -368,7 +368,7 @@ namespace satguruApp.Service.Services
         }
         //public async Task<CompanyEditViewModel> SaveUpdateDivisionCompanyCodeDetailList(CompanyEditViewModel vmModel)
         //{
-        //    var existingDivisionCompanyCode = await _db.CompanyCodeDetails.Where(x => !x.IsDeleted.GetValueOrDefault() && x.TableRowId == vmModel.ID).Select(x => x.CompanyCodeId.GetValueOrDefault()).ToListAsync();
+        //    var existingDivisionCompanyCode = await _db.CompanyCodeDetails.Where(x => x.IsDeleted != true && x.TableRowId == vmModel.ID).Select(x => x.CompanyCodeId.GetValueOrDefault()).ToListAsync();
         //    var newDCC = vmModel.CompanyCodes.Select(x => x.id).AsEnumerable().Except(existingDivisionCompanyCode).ToList();
         //    var deletedDCC = existingDivisionCompanyCode.Except(vmModel.CompanyCodes.Select(x => x.id)).ToList();
 
@@ -378,7 +378,7 @@ namespace satguruApp.Service.Services
         //    {
         //        foreach (var item in deletedDCC)
         //        {
-        //            var rec = await _db.CompanyCodeDetails.Where(x => x.CompanyCodeId == item && x.TableRowId == vmModel.ID && !x.IsDeleted.GetValueOrDefault()).FirstOrDefaultAsync();
+        //            var rec = await _db.CompanyCodeDetails.Where(x => x.CompanyCodeId == item && x.TableRowId == vmModel.ID && x.IsDeleted != true).FirstOrDefaultAsync();
         //            rec.IsDeleted = true;
         //            rec.UpdatedBy = AppUserId;
         //            rec.UpdatedDatetime = DateTime.Now;
@@ -406,7 +406,7 @@ namespace satguruApp.Service.Services
 
         //public async Task<CompanyEditViewModel> SaveUpdateDivisionPayCycleDetailList(CompanyEditViewModel vmModel)
         //{
-        //    var existingDivisionPayCycle = await _db.DivisionPayrollCycles.Where(x => !x.IsDeleted.GetValueOrDefault() && x.DivisionId == vmModel.ID).Select(x => x.CTPayrollCycleId.GetValueOrDefault()).ToListAsync();
+        //    var existingDivisionPayCycle = await _db.DivisionPayrollCycles.Where(x => x.IsDeleted != true && x.DivisionId == vmModel.ID).Select(x => x.CTPayrollCycleId.GetValueOrDefault()).ToListAsync();
         //    var newDP = vmModel.PayrollCycles.Select(x => x.id).AsEnumerable().Except(existingDivisionPayCycle).ToList();
         //    var deletedDP = existingDivisionPayCycle.Except(vmModel.PayrollCycles.Select(x => x.id)).ToList();
 
@@ -416,7 +416,7 @@ namespace satguruApp.Service.Services
         //    {
         //        foreach (var item in deletedDP)
         //        {
-        //            var rec = await _db.DivisionPayrollCycles.Where(x => x.CTPayrollCycleId == item && x.DivisionId == vmModel.ID && !x.IsDeleted.GetValueOrDefault()).FirstOrDefaultAsync();
+        //            var rec = await _db.DivisionPayrollCycles.Where(x => x.CTPayrollCycleId == item && x.DivisionId == vmModel.ID && x.IsDeleted != true).FirstOrDefaultAsync();
         //            rec.IsDeleted = true;
         //            rec.UpdatedBy = AppUserId;
         //            rec.UpdatedDatetime = DateTime.Now;
@@ -439,3 +439,4 @@ namespace satguruApp.Service.Services
 
     }
 }
+

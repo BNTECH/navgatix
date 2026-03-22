@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading;
@@ -64,6 +64,7 @@ namespace satguruApp.DLL.Models
 
         public virtual DbSet<Document> Documents { get; set; }
         public virtual DbSet<Driver> Drivers { get; set; }
+        public virtual DbSet<DriverKYC> DriverKYCs { get; set; }
 
         public virtual DbSet<Education> Educations { get; set; }
 
@@ -129,6 +130,8 @@ namespace satguruApp.DLL.Models
         public virtual DbSet<Notification> Notifications { get; set; }
 
         public virtual DbSet<Payment> Payments { get; set; }
+
+        public virtual DbSet<PushDeviceToken> PushDeviceTokens { get; set; }
 
         public virtual DbSet<PromoCode> PromoCodes { get; set; }
 
@@ -796,9 +799,25 @@ namespace satguruApp.DLL.Models
                     .IsUnicode(false);
                 entity.Property(e => e.UserId).HasMaxLength(450);
 
+                entity.Property(e => e.ProfileStatus)
+                    .HasMaxLength(20)
+                    .IsUnicode(false)
+                    .HasDefaultValue("Pending");
+
                 entity.HasOne(d => d.Transporter).WithMany(p => p.Drivers)
                     .HasForeignKey(d => d.TransporterId)
                     .HasConstraintName("FK_Drivers_TransporterDetails");
+            });
+
+            modelBuilder.Entity<DriverKYC>(entity =>
+            {
+                entity.ToTable("DriverKYC");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.DocumentType).IsRequired().HasMaxLength(50).IsUnicode(false);
+                entity.Property(e => e.DocumentUrl).IsRequired().IsUnicode(false);
+                entity.Property(e => e.VerifiedStatus).HasMaxLength(20).IsUnicode(false).HasDefaultValue("Pending");
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getutcdate())").HasColumnType("datetime");
+                entity.HasOne(d => d.Driver).WithMany().HasForeignKey(d => d.DriverId).OnDelete(DeleteBehavior.Cascade).HasConstraintName("FK_DriverKYC_Driver");
             });
 
             modelBuilder.Entity<Education>(entity =>
@@ -1262,8 +1281,8 @@ namespace satguruApp.DLL.Models
                 entity.ToTable("LiveVehicleTracking");
 
                 entity.Property(e => e.IsDeleted).HasDefaultValue(false);
-                entity.Property(e => e.LastLatitude).HasColumnType("decimal(9, 9)");
-                entity.Property(e => e.LastLongitude).HasColumnType("decimal(9, 9)");
+                entity.Property(e => e.LastLatitude).HasColumnType("decimal(18, 6)");
+                entity.Property(e => e.LastLongitude).HasColumnType("decimal(18, 6)");
                 entity.Property(e => e.LastUpdated).HasColumnType("datetime");
 
                 entity.HasOne(d => d.Vehicle).WithMany(p => p.LiveVehicleTrackings)
@@ -1486,6 +1505,14 @@ namespace satguruApp.DLL.Models
                ////     .HasForeignKey(d => d.BookingId)
                   //  .HasConstraintName("FK__Payments__Bookin__39237A9A");
             });
+
+            modelBuilder.Entity<Booking>(entity =>
+            {
+                entity.Property(e => e.CT_VehicleType).HasColumnName("CT_VehicleType");
+                entity.Property(e => e.CTBodyType).HasColumnName("CTBodyType");
+                entity.Property(e => e.CTTyreType).HasColumnName("CTTyreType");
+            });
+
 
             modelBuilder.Entity<PromoCode>(entity =>
             {
@@ -1809,6 +1836,10 @@ namespace satguruApp.DLL.Models
                 entity.Property(e => e.VehicleNumber)
                     .HasMaxLength(20)
                     .IsUnicode(false);
+                entity.Property(e => e.CT_VehicleType).HasColumnName("CT_VehicleType");
+                entity.Property(e => e.CTBodyType).HasColumnName("CTBodyType");
+                entity.Property(e => e.CTTyreType).HasColumnName("CTTyreType");
+
 
                 entity.HasOne(d => d.Transporter).WithMany(p => p.Vehicles)
                     .HasForeignKey(d => d.TransporterId)

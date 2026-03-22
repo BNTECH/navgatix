@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace satguruApp.DLL.Models;
@@ -22,6 +22,8 @@ public partial class Driver
     public string UserId { get; set; }
 
     public long? TransporterId { get; set; }
+    
+    public string ProfileStatus { get; set; }
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace satguruApp.DLL.Models;
@@ -52,6 +52,9 @@ public partial class Booking
     public int? ArrivalCityId { get; set; }
 
     public string CustomerName { get; set; }
+    public int? CT_VehicleType { get; set; }
+    public int? CTBodyType { get; set; }
+    public int? CTTyreType { get; set; }
 
     public virtual User Customer { get; set; }
 

@@ -78,7 +78,7 @@ namespace navgatix.Controllers
         [ProducesResponseType(201, Type = typeof(DocumentViewModel))]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
-        public async Task<IActionResult> Upload(DocumentViewModel documentDetailViewModel)
+        public async Task<IActionResult> Upload([FromForm] DocumentViewModel documentDetailViewModel)
         {
             if (!ModelState.IsValid)
             {
@@ -86,14 +86,18 @@ namespace navgatix.Controllers
             }
             try
             {
-                if (documentDetailViewModel.File == null || documentDetailViewModel.File.Length == 0)
+
+                if (documentDetailViewModel.File == null || documentDetailViewModel.File.Length == 0 || Request.Form.Files.Count == 0)
                     return BadRequest("File is required.");
 
-                // Folder path: wwwroot/uploads
-                var uploadFolder = Path.Combine(subPath);
+                // Folder path: wwwroot/uploads/documents
+                var uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), subPath);
 
                 if (!Directory.Exists(uploadFolder))
                     Directory.CreateDirectory(uploadFolder);
+
+                if (Request.Form.Files.Count > 0)
+                    documentDetailViewModel.File = Request.Form.Files[0];
 
                 documentDetailViewModel.DocumentExt = Path.GetExtension(documentDetailViewModel.File.FileName);
                 var uniqueFileName = $"{documentDetailViewModel.VehicleId}_{DateTime.Now.Ticks}_{documentDetailViewModel.File.FileName}";
@@ -109,6 +113,8 @@ namespace navgatix.Controllers
 
                 documentDetailViewModel.DocumentExt = documentDetailViewModel.DocumentExt;
                 documentDetailViewModel.DocStream = null;
+                // Save the relative path in the DB so it can be served nicely via static files
+                documentDetailViewModel.DocumentPath = $"/uploads/documents/{uniqueFileName}";
                 await _documentService.SaveUpdateDocument(documentDetailViewModel);
 
                 //var files = Request.Form.Files;
@@ -189,7 +195,7 @@ namespace navgatix.Controllers
             //}
 
             //return File(stream, contentType, fileName);
-           // return Ok();
+            // return Ok();
 
         }
 
@@ -514,7 +520,7 @@ namespace navgatix.Controllers
         {
             if (model.File != null && model.File.Length > 0)
             {
-                var uploads = Path.Combine(Directory.GetCurrentDirectory(), "uploaddocs");
+                var uploads = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "documents");
                 if (!Directory.Exists(uploads))
                     Directory.CreateDirectory(uploads);
 
