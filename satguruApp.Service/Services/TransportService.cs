@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using satguruApp.DLL.Models;
 using satguruApp.Service.Services.Interfaces;
 using satguruApp.Service.ViewModels;
@@ -72,30 +72,32 @@ namespace satguruApp.Service.Services
             }
             if (transportInfo.UserId != null)
             {
+                var transporter = new TransporterDetail();
                 if (transportInfo.CustTransId == null || transportInfo.CustTransId == 0)
                 {
-                    TransporterDetail transporter = new TransporterDetail();
+                    
                     transporter.CompanyName = transportInfo.FirstName + " " + transportInfo.LastName;
                     transporter.BankAccountNumber = transportInfo.BankAccountNumber;
                     transporter.GSTNumber = transportInfo.GSTNumber;
-                    transporter.PANNumber = transportInfo.PANNumber;
                     transporter.IFSCCode = transportInfo.IFSCCode;
                     transporter.ProfileVerified = transportInfo.ProfileVerified;
                     transporter.IsDeleted = false;
-                    transporter.UserId = transporter.UserId;
+                    transporter.UserId = transportInfo.UserId;
                     _db.TransporterDetails.Add(transporter);
                 }
                 else
                 {
-                    TransporterDetail transporter = await _db.TransporterDetails.Where(x => x.Id == transportInfo.CustTransId).FirstOrDefaultAsync();
-                    transporter.CompanyName = transportInfo.FirstName + " " + transportInfo.LastName;
-                    transporter.BankAccountNumber = transportInfo.BankAccountNumber;
-                    transporter.GSTNumber = transportInfo.GSTNumber;
-                    transporter.PANNumber = transportInfo.PANNumber;
-                    transporter.IFSCCode = transportInfo.IFSCCode;
-                    transporter.UserId = transporter.UserId;
-                    transporter.ProfileVerified = transportInfo.ProfileVerified;
-                    transporter.IsDeleted = false;
+                     transporter = await _db.TransporterDetails.Where(x => x.Id == transportInfo.CustTransId).FirstOrDefaultAsync();
+                    if (transporter != null)
+                    {
+                        transporter.CompanyName = transportInfo.FirstName + " " + transportInfo.LastName;
+                        transporter.BankAccountNumber = transportInfo.BankAccountNumber;
+                        transporter.GSTNumber = transportInfo.GSTNumber;
+                        transporter.IFSCCode = transportInfo.IFSCCode;
+                        transporter.UserId = transportInfo.UserId;
+                        transporter.ProfileVerified = transportInfo.ProfileVerified;
+                        transporter.IsDeleted = false;
+                    }
                 }
                 return await _db.SaveChangesAsync();
             }
@@ -107,8 +109,8 @@ namespace satguruApp.Service.Services
         {
             return await (from drv in _db.Drivers
                           join trans in _db.TransporterDetails on drv.TransporterId equals trans.Id
-                          join userInfo in _db.UserInformations on drv.UserId.ToLower() equals userInfo.Id.ToString().ToLower()
-                          where !drv.IsDeleted.GetValueOrDefault() && drv.UserId == userId
+                          join userInfo in _db.UserInformations on drv.UserId equals userInfo.UserId
+                          where drv.IsDeleted != true && drv.UserId == userId
                           select new DriverViewModel
                           {
                               Id = drv.Id,
@@ -122,20 +124,69 @@ namespace satguruApp.Service.Services
         }
         public async Task<TransporterViewModel> GetTransporterDetails(string userId) {
             return await (from transport in _db.TransporterDetails
-                          join userInfo in _db.UserInformations on transport.UserId.ToLower() equals userInfo.Id.ToString().ToLower()
-                          where !transport.IsDeleted.GetValueOrDefault() && transport.UserId == userId
+                          join userInfo in _db.UserInformations on transport.UserId equals userInfo.UserId
+                          where transport.IsDeleted != true && transport.UserId == userId
                           select new TransporterViewModel
                           {
                               CustTransId = transport.Id,
                               Name = transport.CompanyName,
                               UserId = transport.UserId,
-                              BankAccountNumber = transport.BankAccountNumber.Substring(transport.BankAccountNumber.Length-4, transport.BankAccountNumber.Length),
+                              BankAccountNumber = !string.IsNullOrEmpty(transport.BankAccountNumber) && transport.BankAccountNumber.Length >= 4 
+                                  ? transport.BankAccountNumber.Substring(transport.BankAccountNumber.Length - 4) 
+                                  : (transport.BankAccountNumber ?? ""),
                               IFSCCode = transport.IFSCCode,
                               IsDeleted= transport.IsDeleted,
                               GSTNumber = transport.GSTNumber,
-                              PANNumber = transport.PANNumber   ,
                                ProfileVerified = transport.ProfileVerified
                           }).FirstOrDefaultAsync();
         }
+
+        public async Task<int> SaveDriverKYCAsync(DriverKYCViewModel kycInfo)
+        {
+            var kyc = await _db.DriverKYCs.FirstOrDefaultAsync(x => x.DriverId == kycInfo.DriverId && x.DocumentType == kycInfo.DocumentType);
+            if (kyc == null)
+            {
+                kyc = new DriverKYC
+                {
+                    Id = Guid.NewGuid(),
+                    DriverId = kycInfo.DriverId,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _db.DriverKYCs.Add(kyc);
+            }
+
+            kyc.DocumentType = kycInfo.DocumentType;
+            kyc.DocumentUrl = kycInfo.DocumentUrl;
+            kyc.VerifiedStatus = "Pending";
+
+            return await _db.SaveChangesAsync();
+        }
+
+        public async Task<List<DriverKYCViewModel>> GetDriverKYCAsync(Guid driverId)
+        {
+            return await _db.DriverKYCs
+                .Where(x => x.DriverId == driverId)
+                .Select(x => new DriverKYCViewModel
+                {
+                    Id = x.Id,
+                    DriverId = x.DriverId,
+                    DocumentType = x.DocumentType,
+                    DocumentUrl = x.DocumentUrl,
+                    VerifiedStatus = x.VerifiedStatus,
+                    CreatedAt = x.CreatedAt
+                }).ToListAsync();
+        }
+
+        public async Task<int> UpdateProfileStatusAsync(Guid driverId, string status)
+        {
+            var driver = await _db.Drivers.FirstOrDefaultAsync(x => x.Id == driverId);
+            if (driver != null)
+            {
+                driver.ProfileStatus = status;
+                return await _db.SaveChangesAsync();
+            }
+            return 0;
+        }
     }
 }
+

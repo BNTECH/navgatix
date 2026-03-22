@@ -13,11 +13,19 @@ namespace satguruApp.Service.Services.Interfaces
         public Task<VehicleViewModel> SaveVehicleAsync(VehicleViewModel driverInfo);
         public Task<VehicleViewModel> GetVehicleDetails(Guid vehicleId);
         public Task<int> Delete(Guid Id, bool isDeleted);
+        Task<RideMatchingResultViewModel> MatchDriversAndSendRideRequestAsync(RideMatchingRequestViewModel model);
         public Task<BookingViewModel> BookingVehicle(BookingViewModel model);
         public Task<BookingViewModel> CancelBookingVehicleRide(BookingViewModel model);
+        Task<BookingViewModel> RequestRideAsync(BookingViewModel model);
+        Task<BookingViewModel> UpdateRideStatusAsync(long bookingId, string status, Guid? driverId = null);
+        Task<BookingViewModel> RejectRideRequestAsync(long bookingId, string driverUserId);
+        Task<BookingViewModel> GetRideAsync(long bookingId);
         Task<List<BookingViewModel>> BookingVehicleRides(string userId);
+        Task<List<BookingViewModel>> GetDriverRideRequestsAsync(string driverUserId);
+        Task<List<BookingViewModel>> GetDriverRidesAsync(string driverUserId);
         Task<LiveVehicleTrackingViewModel> SaveLiveVehicleTrackings(LiveVehicleTrackingViewModel liveVehicle);
         Task<List<LiveVehicleTrackingViewModel>> GetLiveVehicleTrackings(Guid vehicleId, string deviceId);
+        Task<RideTrackingSnapshotViewModel> GetTrackingSnapshotAsync(long bookingId);
         Task<List<VehicleViewModel>> GetVehicleList(VehicleViewModel vehicleView);
     }
 }

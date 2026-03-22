@@ -49,11 +49,18 @@ namespace navgatix.Controllers
             return Ok(await _commonTypeService.Delete(id));
         }
 
-        [HttpGet("getcommontypeWithKeys/{code}/{flag}")]
+        [HttpGet("getcommontypeWithKeys/{code}")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetCommonTypeListWithAndId(string code, string flag = "")
+        public async Task<IActionResult> GetCommonTypeListWithAndId(string code)
         {
+            string flag = "";
             return Ok(await _commonTypeService.GetCommonTypeListWithAndId(code, flag));
+        }
+        [HttpGet("vehicle-types")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetVehicleCommonTypes()
+        {
+            return Ok(await _commonTypeService.GetVehicleCommonTypesAsync());
         }
         [HttpPost("filterdata")]
         [AllowAnonymous]

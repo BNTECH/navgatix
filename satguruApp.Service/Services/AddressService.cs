@@ -223,7 +223,7 @@ namespace satguruApp.Service.Services
         {
             if (vmModel.Id != 0)
             {
-                var add = await _db.Addresses.Where(x => x.Id == vmModel.Id && !x.Is_Deleted.GetValueOrDefault()).FirstOrDefaultAsync();
+                var add = await _db.Addresses.Where(x => x.Id == vmModel.Id && x.Is_Deleted != true).FirstOrDefaultAsync();
                 vmModel.RKUpateTo(add);
                 //add.Address2 = vmModel.Address2;
                 add.Name = vmModel.Name;
@@ -265,3 +265,4 @@ namespace satguruApp.Service.Services
         }
     }
 }
+

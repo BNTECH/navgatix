@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using satguruApp.DLL.Models;
 using System;
 using System.Collections.Generic;
@@ -15,14 +15,11 @@ namespace satguruApp.Service.ViewModels
         {
             Id = model.Id,
             UserId=model.UserId,
-            CompanyName=model.CompanyName,
-            GSTNumber=model.GSTNumber,
             Address=model.Address,
             City=model.City,
             State=model.State,
             Pincode=model.Pincode,
             IsDeleted=false
-            
         };
 
         public long Id { get; set; }
@@ -42,6 +39,10 @@ namespace satguruApp.Service.ViewModels
         public string? Pincode { get; set; }
 
         public bool? IsDeleted { get; set; }
+        
+        public string? Name { get; set; }
+        public string? Phone { get; set; }
+        public string? ProfilePic { get; set; }
 
         public virtual UserInfoViewModel User { get; set; }
         public void ModelMapTo(CustomerDetail model) {

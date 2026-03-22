@@ -38,6 +38,45 @@ namespace satguruApp.DLL.Models
             modelBuilder.Entity<UserLogin>().HasKey(e => new { e.LoginProvider, e.ProviderKey, e.UserId });
             modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserClaim<string>>().ToTable("AspNetUserClaims");
             modelBuilder.Entity<UserRoles>().ToTable("UserRoles");
+
+            modelBuilder.Entity<PushDeviceToken>(entity =>
+            {
+                entity.ToTable("PushDeviceTokens");
+
+                entity.HasKey(e => e.Id);
+
+                entity.HasIndex(e => e.DeviceToken)
+                    .IsUnique();
+
+                entity.Property(e => e.Id)
+                    .HasDefaultValueSql("(newid())");
+                entity.Property(e => e.UserId)
+                    .HasMaxLength(550)
+                    .IsUnicode(false);
+                entity.Property(e => e.DeviceToken)
+                    .HasMaxLength(512)
+                    .IsUnicode(false);
+                entity.Property(e => e.Platform)
+                    .HasMaxLength(20)
+                    .IsUnicode(false);
+                entity.Property(e => e.DeviceId)
+                    .HasMaxLength(128)
+                    .IsUnicode(false);
+                entity.Property(e => e.IsActive)
+                    .HasDefaultValue(true);
+                entity.Property(e => e.CreatedAt)
+                    .HasColumnType("datetime")
+                    .HasDefaultValueSql("(getdate())");
+                entity.Property(e => e.LastSeenAt)
+                    .HasColumnType("datetime")
+                    .HasDefaultValueSql("(getdate())");
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.PushDeviceTokens)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_PushDeviceTokens_Users");
+            });
         }
     }
 }

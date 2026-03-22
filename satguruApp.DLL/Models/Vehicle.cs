@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace satguruApp.DLL.Models;
@@ -46,6 +46,7 @@ public partial class Vehicle
     public DateTime? UpdatedDatetime { get; set; }
 
     public int? CTBodyType { get; set; }
+    public int? CTTyreType { get; set; }
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 

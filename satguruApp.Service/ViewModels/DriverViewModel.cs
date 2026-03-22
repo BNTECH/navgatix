@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -45,12 +45,18 @@ namespace satguruApp.Service.ViewModels
         public long? TransporterId { get; set; }
         public string? LicenseNumber { get; set; }
         public DateTime? LicenseExpiry { get; set; }
+        public string? VehicleName { get; set; }
+        public string? VehicleNumber { get; set; }
+        public int? CT_VehicleType { get; set; }
+        public int? CTBodyType { get; set; }
+        public int? CTTyreType { get; set; }
+        public string? PANCardUrl { get; set; }
+        public string? ProfileStatus { get; set; }
     }
     public class TransporterViewModel : DriverViewModel
     {
         public string? CompanyName { get; set; }
         public string? GSTNumber { get; set; }
-        public string? PANNumber { get; set; }
         public string? Address { get; set; }
         public string? Pincode { get; set; }
         public string? BankAccountNumber { get; set; }

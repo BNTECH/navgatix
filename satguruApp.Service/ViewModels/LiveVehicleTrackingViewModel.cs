@@ -14,16 +14,19 @@ namespace satguruApp.Service.ViewModels
         public bool? IsDeleted { get; set; }
 
         public Guid? VehicleId { get; set; }
-        public string VehicleNumber { get; set; }
+        public string? VehicleNumber { get; set; }
 
-        public decimal? LastLatitude { get; set; }
+        public decimal? Latitude { get; set; }
 
-        public decimal? LastLongitude { get; set; }
+        public decimal? Longitude { get; set; }
 
         public DateTime? LastUpdated { get; set; }
         public string? Message   { get; set; }
         public string? DeviceId { get; set; }
+        public long? BookingId { get; set; }
+        public string UserId { get; set; }
+        public double? DistanceRemainingKm { get; set; }
+        public int? EstimatedArrivalMinutes { get; set; }
 
-        public virtual VehicleViewModel Vehicle { get; set; }
     }
 }

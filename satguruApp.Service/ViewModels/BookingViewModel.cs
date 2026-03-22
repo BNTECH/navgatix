@@ -1,4 +1,4 @@
-﻿using satguruApp.DLL.Models;
+using satguruApp.DLL.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,11 +14,11 @@ namespace satguruApp.Service.ViewModels
         {
             Id = model.Id,
             CustomerId = model.CustomerId,
-            CustomerName = !string.IsNullOrEmpty(model.CustomerName) ? model.CustomerName : model.Customer.FirstName + (!string.IsNullOrEmpty(model.Customer.LastName) ? model.Customer.LastName : string.Empty),
+            CustomerName = !string.IsNullOrEmpty(model.CustomerName) ? model.CustomerName : (model.Customer != null ? (model.Customer.FirstName + (!string.IsNullOrEmpty(model.Customer.LastName) ? model.Customer.LastName : string.Empty)) : string.Empty),
             VehicleId = model.VehicleId,
-            VehicleNumber = model.Vehicle.VehicleNumber,
+            VehicleNumber = model.Vehicle != null ? model.Vehicle.VehicleNumber : string.Empty,
             DriverId = model.DriverId,
-            DriverName = model.Driver.Name,
+            DriverName = model.Driver != null ? model.Driver.Name : string.Empty,
             PickupAddress = model.PickupAddress,
             PickupLat = model.PickupLat,
             PickupLng = model.PickupLng,
@@ -30,6 +30,7 @@ namespace satguruApp.Service.ViewModels
             EstimatedFare = model.EstimatedFare,
             FinalFare = model.FinalFare,
             CT_BookingStatus = model.CT_BookingStatus,
+            RideStatus = global::satguruApp.Service.ViewModels.RideStatus.ToName(model.CT_BookingStatus),
             ScheduledTime = model.ScheduledTime,
             CreatedAt = model.CreatedAt,
             IsAvailable = model.IsAvailable,
@@ -37,9 +38,11 @@ namespace satguruApp.Service.ViewModels
             DeptCityId = model.DeptCityId,
             ArrivalStateId = model.ArrivalStateId,
             ArrivalCityId = model.ArrivalCityId,
-
-
+            CT_VehicleType = model.CT_VehicleType,
+            CTBodyType = model.CTBodyType,
+            CTTyreType = model.CTTyreType,
         };
+
         public void ModelMapTo(Booking model)
         {
             model.Id = Id;
@@ -66,61 +69,45 @@ namespace satguruApp.Service.ViewModels
             model.ArrivalStateId = ArrivalStateId;
             model.ArrivalCityId = ArrivalCityId;
             model.CustomerName = CustomerName;
+            model.CT_VehicleType = CT_VehicleType;
+            model.CTBodyType = CTBodyType;
+            model.CTTyreType = CTTyreType;
         }
-        public long Id { get; set; }
 
+        public long Id { get; set; }
         public string? CustomerId { get; set; }
         public string? CustomerName { get; set; }
-
         public Guid? VehicleId { get; set; }
         public string? VehicleNumber { get; set; }
-
         public Guid? DriverId { get; set; }
         public string? DriverName { get; set; }
-
         public string? PickupAddress { get; set; }
-
         public string? DropAddress { get; set; }
-
         public decimal? PickupLat { get; set; }
-
         public decimal? PickupLng { get; set; }
-
         public decimal? DropLat { get; set; }
-
         public decimal? DropLng { get; set; }
-
         public string? GoodsType { get; set; }
-
         public decimal? GoodsWeight { get; set; }
-
         public decimal? EstimatedFare { get; set; }
-
         public decimal? FinalFare { get; set; }
-
         public int? CT_BookingStatus { get; set; }
-
+        public string? RideStatus { get; set; }
+        
         public DateTime? ScheduledTime { get; set; }
-
         public DateTime? CreatedAt { get; set; }
-
         public bool? IsAvailable { get; set; }
-
         public bool? IsDeleted { get; set; }
-
-        public string? Message { get; set; }
         public int? DeptStateId { get; set; }
         public int? DeptCityId { get; set; }
         public int? ArrivalStateId { get; set; }
         public int? ArrivalCityId { get; set; }
-        public virtual ICollection<BookingBenefitsLog> BookingBenefitsLogs { get; set; } = new List<BookingBenefitsLog>();
-
-        public virtual User Customer { get; set; }
-
-        public virtual Driver Driver { get; set; }
+        public int? CT_VehicleType { get; set; }
+        public int? CTBodyType { get; set; }
+        public int? CTTyreType { get; set; }
+        public string? Message { get; set; }
 
         public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
-
-        public virtual BookingViewModel Vehicle { get; set; }
+        public virtual VehicleViewModel Vehicle { get; set; }
     }
 }

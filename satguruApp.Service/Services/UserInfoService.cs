@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using satguruApp.DLL.Models;
 using satguruApp.Service.Services.Interfaces;
 using satguruApp.Service.ViewModels;
@@ -17,6 +17,11 @@ namespace satguruApp.Service.Services
         private SatguruDBContext _db => (SatguruDBContext)_context;
         public async Task<UserInfoViewModel> SaveAsync(UserInfoViewModel userInfo)
         {
+            if (userInfo == null || string.IsNullOrWhiteSpace(userInfo.UserId))
+            {
+                return userInfo;
+            }
+
             var gender = await _db.Genders.Where(x => x.Name == userInfo.Gender || x.Id == userInfo.GenderId).FirstOrDefaultAsync();
             if (gender == null && !string.IsNullOrEmpty(userInfo.Gender))
             {
@@ -26,55 +31,51 @@ namespace satguruApp.Service.Services
                 _db.Genders.Add(gender);
                 await _db.SaveChangesAsync();
             }
-            if (userInfo.UserId != null)
+            if (gender != null)
             {
-                var usrInfo = await _db.UserInformations.Where(x => x.Email == userInfo.Email || x.UserId == userInfo.UserId || ((x.PhoneNumber == userInfo.PhoneNumber && !string.IsNullOrEmpty(x.PhoneNumber) || string.IsNullOrEmpty(userInfo.PhoneNumber)) || (x.Mobile == userInfo.PhoneNumber && !string.IsNullOrEmpty(x.Mobile) || string.IsNullOrEmpty(userInfo.Mobile))).FirstOrDefaultAsync();
-                if ((userInfo.Id == null || userInfo.Id == Guid.Empty) && usrInfo == null)
-                {
-                    usrInfo = new UserInformation();
-                    usrInfo.Id = Guid.NewGuid();
-                    usrInfo.FirstName = userInfo.FirstName;
-                    usrInfo.LastName = userInfo.LastName;
-                    usrInfo.Email = userInfo.Email;
-                    usrInfo.MiddleName = "";
-                    usrInfo.Mobile = userInfo.Mobile;
-                    usrInfo.PhoneNumber = userInfo.PhoneNumber;
-                    usrInfo.FacebookLink = userInfo.FacebookLink;
-                    usrInfo.InstagramLink = userInfo.InstagramLink;
-                    usrInfo.WhatsAppLink = userInfo.WhatsAppLink;
-                    usrInfo.AccountTypeId = userInfo.AccountTypeId;
-                    usrInfo.Company = userInfo.Company;
-                    usrInfo.DOB = userInfo.DOB;
-                    usrInfo.GenderId = userInfo.GenderId;
-                    usrInfo.Description = userInfo.Description;
-                    usrInfo.ProfilePic = userInfo.ProfilePic;
-                    usrInfo.IsDeleted = false;
-                    usrInfo.UserId = userInfo.UserId;
-                    _db.UserInformations.Add(usrInfo);
-                }
-                else
-                {
-                    usrInfo = await _db.UserInformations.Where(x => x.Id == userInfo.Id || x.Email == userInfo.Email || x.UserId == userInfo.UserId).FirstOrDefaultAsync();
-
-                    usrInfo.FirstName = userInfo.FirstName;
-                    usrInfo.LastName = userInfo.LastName;
-                    usrInfo.Email = userInfo.Email;
-                    usrInfo.MiddleName = userInfo.MiddleName;
-                    usrInfo.Mobile = userInfo.Mobile;
-                    usrInfo.PhoneNumber = userInfo.PhoneNumber;
-                    usrInfo.FacebookLink = userInfo.FacebookLink;
-                    usrInfo.InstagramLink = userInfo.InstagramLink;
-                    usrInfo.WhatsAppLink = userInfo.WhatsAppLink;
-                    usrInfo.AccountTypeId = userInfo.AccountTypeId;
-                    usrInfo.Company = userInfo.Company;
-                    usrInfo.DOB = userInfo.DOB;
-                    usrInfo.GenderId = userInfo.GenderId;
-                    usrInfo.IsDeleted = false;
-                    usrInfo.ProfilePic = userInfo.ProfilePic;
-                }
-                await _db.SaveChangesAsync();
-                userInfo.Id = usrInfo.Id;
+                userInfo.GenderId = gender.Id;
             }
+
+            var usrInfo = await _db.UserInformations.FirstOrDefaultAsync(x =>
+                (userInfo.Id.HasValue && userInfo.Id != Guid.Empty && x.Id == userInfo.Id.Value) ||
+                x.UserId == userInfo.UserId ||
+                (!string.IsNullOrWhiteSpace(userInfo.Email) && x.Email == userInfo.Email) ||
+                (!string.IsNullOrWhiteSpace(userInfo.PhoneNumber) && x.PhoneNumber == userInfo.PhoneNumber) ||
+                (userInfo.Mobile.HasValue && x.Mobile == userInfo.Mobile.Value));
+
+            var isNewRecord = usrInfo == null;
+            var target = usrInfo ?? new UserInformation
+            {
+                Id = (userInfo.Id.HasValue && userInfo.Id.Value != Guid.Empty) ? userInfo.Id.Value : Guid.NewGuid(),
+                UserId = userInfo.UserId,
+                CreatedDate = DateTime.UtcNow
+            };
+
+            target.FirstName = userInfo.FirstName ?? target.FirstName;
+            target.LastName = userInfo.LastName ?? target.LastName;
+            target.Email = userInfo.Email ?? target.Email;
+            target.MiddleName = userInfo.MiddleName ?? target.MiddleName ?? string.Empty;
+            target.Mobile = userInfo.Mobile ?? target.Mobile;
+            target.PhoneNumber = userInfo.PhoneNumber ?? target.PhoneNumber;
+            target.FacebookLink = userInfo.FacebookLink ?? target.FacebookLink;
+            target.InstagramLink = userInfo.InstagramLink ?? target.InstagramLink;
+            target.WhatsAppLink = userInfo.WhatsAppLink ?? target.WhatsAppLink;
+            target.AccountTypeId = userInfo.AccountTypeId ?? target.AccountTypeId;
+            target.Company = userInfo.Company ?? target.Company;
+            target.DOB = userInfo.DOB ?? target.DOB;
+            target.GenderId = userInfo.GenderId ?? target.GenderId;
+            target.Description = userInfo.Description ?? target.Description;
+            target.ProfilePic = userInfo.ProfilePic ?? target.ProfilePic;
+            target.IsDeleted = false;
+            target.UpdatedDate = DateTime.UtcNow;
+
+            if (isNewRecord)
+            {
+                _db.UserInformations.Add(target);
+            }
+
+            await _db.SaveChangesAsync();
+            userInfo.Id = target.Id;
             return userInfo;
         }
         public async Task<int> UpdateProfilePic(string userId, string profilePic)
@@ -213,38 +214,39 @@ namespace satguruApp.Service.Services
         {
 
             var userDeail = await (from user in _db.Users
-                                   join userInfo in _db.UserInformations on user.Id equals userInfo.UserId
-                                   join accountType in _db.AccountTypes on userInfo.AccountTypeId equals accountType.Id into accountTypes
+                                   join userInfo in _db.UserInformations on user.Id equals userInfo.UserId into userInfos
+                                   from userInfo in userInfos.DefaultIfEmpty()
+                                   join accountType in _db.AccountTypes on (userInfo != null ? userInfo.AccountTypeId : 0) equals accountType.Id into accountTypes
                                    from accountType in accountTypes.DefaultIfEmpty()
-                                   join gender in _db.Genders on userInfo.GenderId equals gender.Id into genders
+                                   join gender in _db.Genders on (userInfo != null ? userInfo.GenderId : 0) equals gender.Id into genders
                                    from gender in genders.DefaultIfEmpty()
-                                   where (userInfo.IsDeleted == false || userInfo.IsDeleted == null) && user.Id == userId
+                                   where (userInfo == null || userInfo.IsDeleted == false || userInfo.IsDeleted == null) && user.Id == userId
                                    select new UserInfoViewModel
                                    {
-                                       FirstName = userInfo.FirstName,
-                                       LastName = userInfo.LastName,
-                                       Name = userInfo.FirstName + (!string.IsNullOrEmpty(userInfo.LastName) ? (" " + userInfo.LastName) : ""),
-                                       MiddleName = userInfo.MiddleName,
+                                       FirstName = userInfo != null ? userInfo.FirstName : user.FirstName,
+                                       LastName = userInfo != null ? userInfo.LastName : user.LastName,
+                                       Name = (userInfo != null ? userInfo.FirstName : user.FirstName) + (!string.IsNullOrEmpty(userInfo != null ? userInfo.LastName : user.LastName) ? (" " + (userInfo != null ? userInfo.LastName : user.LastName)) : ""),
+                                       MiddleName = userInfo != null ? userInfo.MiddleName : "",
                                        Email = user.Email,
                                        PhoneNumber = user.PhoneNumber,
-                                       Mobile = userInfo.Mobile,
-                                       AccountTypeId = userInfo.AccountTypeId,
-                                       UserId = userInfo.UserId,
-                                       DOB = userInfo.DOB,
-                                       IsDeleted = userInfo.IsDeleted,
-                                       CreatedDate = userInfo.CreatedDate,
-                                       UpdatedDate = userInfo.UpdatedDate,
-                                       WhatsAppLink = userInfo.WhatsAppLink,
-                                       TwiterLink = userInfo.TwiterLink,
-                                       FacebookLink = userInfo.FacebookLink,
-                                       InstagramLink = userInfo.InstagramLink,
-                                       WebsiteLink = userInfo.WebsiteLink,
-                                       Company = userInfo.Company,
-                                       GenderId = userInfo.GenderId,
-                                       Gender = gender.Name,
-                                       AccountTypeName = accountType.Name,
-                                       Description = userInfo.Description,
-                                       ProfilePic = userInfo.ProfilePic,
+                                       Mobile = userInfo != null ? userInfo.Mobile : null,
+                                       AccountTypeId = userInfo != null ? userInfo.AccountTypeId : null,
+                                       UserId = user.Id,
+                                       DOB = userInfo != null ? userInfo.DOB : null,
+                                       IsDeleted = userInfo != null ? userInfo.IsDeleted : false,
+                                       CreatedDate = userInfo != null ? userInfo.CreatedDate : null,
+                                       UpdatedDate = userInfo != null ? userInfo.UpdatedDate : null,
+                                       WhatsAppLink = userInfo != null ? userInfo.WhatsAppLink : "",
+                                       TwiterLink = userInfo != null ? userInfo.TwiterLink : "",
+                                       FacebookLink = userInfo != null ? userInfo.FacebookLink : "",
+                                       InstagramLink = userInfo != null ? userInfo.InstagramLink : "",
+                                       WebsiteLink = userInfo != null ? userInfo.WebsiteLink : "",
+                                       Company = userInfo != null ? userInfo.Company : "",
+                                       GenderId = userInfo != null ? userInfo.GenderId : null,
+                                       Gender = gender != null ? gender.Name : "",
+                                       AccountTypeName = accountType != null ? accountType.Name : "",
+                                       Description = userInfo != null ? userInfo.Description : "",
+                                       ProfilePic = userInfo != null ? userInfo.ProfilePic : "",
                                    }).FirstOrDefaultAsync();
 
             return userDeail;

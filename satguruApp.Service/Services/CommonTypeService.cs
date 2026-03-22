@@ -132,5 +132,20 @@ namespace satguruApp.Service.Services
             }).ToListAsync();
 
         }
+        public async Task<VehicleCommonTypesViewModel> GetVehicleCommonTypesAsync()
+        {
+            var productTypes = await GetCommonTypeListWithAndId("PRODTYP", string.Empty);
+            var vehicleTypes = await GetCommonTypeListWithAndId("VEHTYP", string.Empty);
+            var bodyTypes = await GetCommonTypeListWithAndId("BDTYP", string.Empty);
+            var tyreTypes = await GetCommonTypeListWithAndId("VEHTYR", string.Empty);
+
+            return new VehicleCommonTypesViewModel
+            {
+                ProductTypes = productTypes,
+                VehicleTypes = vehicleTypes,
+                BodyTypes = bodyTypes,
+                TyreTypes = tyreTypes
+            };
+        }
     }
 }

@@ -16,5 +16,6 @@ namespace satguruApp.Service.Services.Interfaces
         public Task<int> SaveUpdate(CommonTypeViewModel commonTypeView);
         public Task<int> Delete(int id);
         public Task<List<CommonTypeWithKeyViewModel>> GetCommonTypeListWithAndId(String code, string flag);
+        public Task<VehicleCommonTypesViewModel> GetVehicleCommonTypesAsync();
     }
 }

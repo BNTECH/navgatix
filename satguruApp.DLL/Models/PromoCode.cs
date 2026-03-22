@@ -7,9 +7,9 @@ public partial class PromoCode
 {
     public Guid Id { get; set; }
 
-    public string Code { get; set; }
+    public string? Code { get; set; }
 
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     public int? DiscountPercent { get; set; }
 

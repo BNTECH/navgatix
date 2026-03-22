@@ -1,0 +1,149 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using satguruApp.DLL.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace navgatix.SeedData
+{
+    public static class CommonTypeSeeder
+    {
+        private static readonly ParentSeed[] ParentSeeds = new[]
+        {
+            new ParentSeed("Vehicle Type", "VEHTYP", "vehicle_type", 1, "Parent category for vehicle types"),
+            new ParentSeed("Body Type", "BDTYP", "body_type", 2, "Parent category for vehicle body types"),
+            new ParentSeed("Vehicle Tyre", "VEHTYR", "tyre_type", 3, "Parent category for vehicle tyre configurations")
+        };
+
+        private static readonly ChildSeed[] VehicleTypeChildren = new[]
+        {
+            new ChildSeed("VEHTYP", "2-Wheeler", "VEH001", 1),
+            new ChildSeed("VEHTYP", "3-Wheeler / Auto Cargo", "VEH002", 2),
+            new ChildSeed("VEHTYP", "Mini Truck (Tata Ace)", "VEH003", 3),
+            new ChildSeed("VEHTYP", "Pickup / LCV", "VEH004", 4),
+            new ChildSeed("VEHTYP", "14 Ft Truck", "VEH005", 5),
+            new ChildSeed("VEHTYP", "17 Ft Truck", "VEH006", 6),
+            new ChildSeed("VEHTYP", "20 Ft Truck", "VEH007", 7),
+            new ChildSeed("VEHTYP", "24 Ft Truck", "VEH008", 8),
+            new ChildSeed("VEHTYP", "32 Ft Truck", "VEH009", 9),
+            new ChildSeed("VEHTYP", "Single Axle Truck", "VEH010", 10),
+            new ChildSeed("VEHTYP", "Multi Axle Truck", "VEH011", 11),
+            new ChildSeed("VEHTYP", "Container Truck", "VEH012", 12)
+        };
+
+        private static readonly ChildSeed[] BodyTypeChildren = new[]
+        {
+            new ChildSeed("BDTYP", "Open Body", "BDY001", 1),
+            new ChildSeed("BDTYP", "Closed / Box", "BDY002", 2),
+            new ChildSeed("BDTYP", "Flat Bed", "BDY003", 3),
+            new ChildSeed("BDTYP", "Refrigerated", "BDY004", 4),
+            new ChildSeed("BDTYP", "Tipper", "BDY005", 5),
+            new ChildSeed("BDTYP", "Tanker", "BDY006", 6),
+            new ChildSeed("BDTYP", "Car Carrier", "BDY007", 7)
+        };
+
+        private static readonly ChildSeed[] TyreTypeChildren = new[]
+        {
+            new ChildSeed("VEHTYR", "4 Tyre", "TYR001", 1),
+            new ChildSeed("VEHTYR", "6 Tyre", "TYR002", 2),
+            new ChildSeed("VEHTYR", "10 Tyre", "TYR003", 3),
+            new ChildSeed("VEHTYR", "12 Tyre", "TYR004", 4),
+            new ChildSeed("VEHTYR", "14 Tyre", "TYR005", 5),
+            new ChildSeed("VEHTYR", "16 Tyre", "TYR006", 6),
+            new ChildSeed("VEHTYR", "18 Tyre", "TYR007", 7),
+            new ChildSeed("VEHTYR", "22 Tyre", "TYR008", 8)
+        };
+
+        public static void Seed(IServiceProvider serviceProvider)
+        {
+            using var scope = serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<SatguruDBContext>();
+           // var logger = scope.ServiceProvider.GetService<ILogger<CommonTypeSeeder>>();
+            try
+            {
+                EnsureVehicleCommonTypesAsync(db).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                //logger?.LogError(ex, "Failed to seed vehicle common types.");
+            }
+        }
+
+        private static async Task EnsureVehicleCommonTypesAsync(SatguruDBContext db)
+        {
+            var parentLookup = new Dictionary<string, CommonType>(StringComparer.OrdinalIgnoreCase);
+            foreach (var parentSeed in ParentSeeds)
+            {
+                var parent = await db.CommonTypes
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(ct => ct.Code == parentSeed.Code && !(ct.IsDeleted ?? false));
+
+                if (parent == null)
+                {
+                    parent = new CommonType
+                    {
+                        Name = parentSeed.Name,
+                        Code = parentSeed.Code,
+                        Keys = parentSeed.Keys,
+                        OrderBy = parentSeed.Order,
+                        ValueDesc = parentSeed.Description,
+                        Source = "SYSTEM",
+                        IsDeleted = false,
+                        IsSystem = true,
+                        CreatedDatetime = DateTime.UtcNow
+                    };
+                    db.CommonTypes.Add(parent);
+                    await db.SaveChangesAsync();
+                }
+
+                parentLookup[parentSeed.Code] = parent;
+            }
+
+            var children = VehicleTypeChildren
+                .Concat(BodyTypeChildren)
+                .Concat(TyreTypeChildren)
+                .ToList();
+
+            var now = DateTime.UtcNow;
+            var newChildren = new List<CommonType>();
+
+            foreach (var childSeed in children)
+            {
+                if (!parentLookup.TryGetValue(childSeed.ParentCode, out var parent))
+                {
+                    continue;
+                }
+
+                var exists = await db.CommonTypes.AnyAsync(ct => ct.Code == childSeed.Code && !(ct.IsDeleted ?? false));
+                if (exists) continue;
+
+                newChildren.Add(new CommonType
+                {
+                    Name = childSeed.Name,
+                    Code = childSeed.Code,
+                    CTID = parent.Id,
+                    Keys = parent.Keys,
+                    OrderBy = childSeed.Order,
+                    ValueDesc = childSeed.Name,
+                    ValueStr = childSeed.Name,
+                    Source = "SYSTEM",
+                    IsDeleted = false,
+                    IsSystem = true,
+                    CreatedDatetime = now
+                });
+            }
+
+            if (newChildren.Count > 0)
+            {
+                db.CommonTypes.AddRange(newChildren);
+                await db.SaveChangesAsync();
+            }
+        }
+
+        public readonly record struct ParentSeed(string Name, string Code, string Keys, int Order, string Description);
+        public readonly record struct ChildSeed(string ParentCode, string Name, string Code, int Order);
+    }
+}
