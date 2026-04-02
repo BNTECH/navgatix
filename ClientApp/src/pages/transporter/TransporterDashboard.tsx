@@ -75,12 +75,12 @@ const TransporterDashboard = () => {
     const [isVehicleModalOpen, setIsVehicleModalOpen] = useState(false);
     const [isDriverModalOpen, setIsDriverModalOpen] = useState(false);
     const formatCurrency = (value: number = 0) => `₹ ${Number(value).toLocaleString('en-IN')}`;
-    const formatLastSeen = (value?: string) => {
-        if (!value) return 'No data';
-        const parsed = new Date(value);
-        if (isNaN(parsed.getTime())) return 'No data';
-        return parsed.toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' });
-    };
+   // const formatLastSeen = (value?: string) => {
+     //   if (!value) return 'No data';
+     //   const parsed = new Date(value);
+     //   if (isNaN(parsed.getTime())) return 'No data';
+     //   return parsed.toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' });
+   // };
 
     const getStatusStyles = (status?: string) => {
         const s = (status || 'Available').toLowerCase();
@@ -596,7 +596,6 @@ const TransporterDashboard = () => {
                             </table>
                         </div>
                     </div>
-                </div>
                     )}
                     {activeTab === 'drivers' && (
                         <div className="premium-card overflow-hidden">
