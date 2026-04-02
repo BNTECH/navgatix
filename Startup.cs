@@ -115,15 +115,22 @@ namespace navgatix
 
             });
             
-            // Allow local frontend dev servers to access the API
+            // Allow local frontend dev servers and mobile apps to access the API
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowReactApp", policy =>
                 {
-                    policy.WithOrigins("http://localhost:5006", "http://localhost:5173", "http://localhost:3000")
-                          .AllowAnyHeader()
-                          .AllowAnyMethod()
-                          .AllowCredentials(); // Important if using cookies/tokens
+                    policy.WithOrigins(
+                        "http://localhost:5006", 
+                        "http://localhost:5173", 
+                        "http://localhost:3000",
+                        "capacitor://localhost",
+                        "http://localhost",
+                         "https://localhost:7048"
+                    )
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
                 });
             });
 
@@ -178,6 +185,7 @@ namespace navgatix
                     pattern: "{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapControllers();
                 endpoints.MapHub<LocationHub>("/hubs/location");
+                endpoints.MapHub<ChatHub>("/hubs/chat");
                 
                 // Fallback to index.html for SPA
                 endpoints.MapFallbackToFile("index.html");

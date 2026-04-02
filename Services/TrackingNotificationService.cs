@@ -32,5 +32,11 @@ namespace navgatix.Services
             await _hubContext.Clients.Group($"Ride_{snapshot.BookingId}")
                 .SendAsync("rideStatusChanged", snapshot);
         }
+
+        public async Task NotifyFleetLocationUpdatedAsync(string transporterUserId, LiveVehicleTrackingViewModel tracking)
+        {
+            await _hubContext.Clients.Group($"TransporterUser_{transporterUserId}")
+                .SendAsync("fleetLocationUpdated", tracking);
+        }
     }
 }

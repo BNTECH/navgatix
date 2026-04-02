@@ -8,5 +8,6 @@ namespace satguruApp.Service.Services.Interfaces
         Task NotifyDriverLocationUpdatedAsync(RideTrackingSnapshotViewModel snapshot);
         Task NotifyRideAssignedAsync(RideTrackingSnapshotViewModel snapshot);
         Task NotifyRideStatusChangedAsync(RideTrackingSnapshotViewModel snapshot);
+        Task NotifyFleetLocationUpdatedAsync(string transporterUserId, LiveVehicleTrackingViewModel tracking);
     }
 }

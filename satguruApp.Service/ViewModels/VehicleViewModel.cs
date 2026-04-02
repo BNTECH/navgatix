@@ -37,6 +37,7 @@ namespace satguruApp.Service.ViewModels
 
         public long TransporterId { get; set; }
         public string? TransporterName { get; set; }
+        public string? UserId { get; set; }
 
         public string? VehicleNumber { get; set; }
         public string? VehicleName { get; set; }
@@ -77,7 +78,7 @@ namespace satguruApp.Service.ViewModels
 
         public virtual ICollection<LiveVehicleTrackingViewModel> LiveVehicleTrackings { get; set; } = new List<LiveVehicleTrackingViewModel>();
 
-        public virtual UserViewModel Transporter { get; set; }
+        public virtual UserViewModel? Transporter { get; set; }
         public void ModelMapTo(Vehicle model) {
             model.Id = Id;
             model.VehicleNumber = VehicleNumber;

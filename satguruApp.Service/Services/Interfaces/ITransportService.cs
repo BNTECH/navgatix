@@ -17,5 +17,8 @@ namespace satguruApp.Service.Services.Interfaces
         Task<int> SaveDriverKYCAsync(DriverKYCViewModel kycInfo);
         Task<List<DriverKYCViewModel>> GetDriverKYCAsync(Guid driverId);
         Task<int> UpdateProfileStatusAsync(Guid driverId, string status);
+        Task<TransporterDashboardSummaryViewModel> GetDashboardSummary(string userId);
+        Task<TransporterAnalyticsViewModel> GetTransporterAnalytics(string userId);
+        Task<List<TransporterFleetItemViewModel>> GetFleetOverview(string userId);
     }
 }

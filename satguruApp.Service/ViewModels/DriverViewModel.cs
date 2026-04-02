@@ -43,6 +43,7 @@ namespace satguruApp.Service.ViewModels
         public string? Description { get; set; }
         public string? ProfilePic { get; set; }
         public long? TransporterId { get; set; }
+        public string? TransporterUserId { get; set; }
         public string? LicenseNumber { get; set; }
         public DateTime? LicenseExpiry { get; set; }
         public string? VehicleName { get; set; }

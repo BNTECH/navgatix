@@ -504,12 +504,12 @@ const RegisterPage = () => {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                        GST Number {role === 'Customer' && <span className="text-[10px] text-slate-400 font-normal">(Optional)</span>}
-                                    </label>
+                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    GST Number <span className="text-[10px] text-slate-400 font-normal">(Optional)</span>
+                                </label>
                                     <div className="relative group">
                                         <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5 transition-colors group-focus-within:text-primary-500" />
-                                        <input type="text" name="gstNumber" className="input-field pl-11 bg-white" placeholder="27AAAAA0000A1Z5" onChange={(e) => setFormData({ ...formData, gstNumber: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15) })} maxLength={15} required={role === 'Transporter'} />
+                                        <input type="text" name="gstNumber" className="input-field pl-11 bg-white" placeholder="27AAAAA0000A1Z5" onChange={(e) => setFormData({ ...formData, gstNumber: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15) })} maxLength={15} />
                                     </div>
                                 </div>
                             </div>

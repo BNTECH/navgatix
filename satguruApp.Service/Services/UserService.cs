@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
@@ -487,6 +487,7 @@ namespace satguruApp.Service.Services
                 UserInfoId = (await _db.UserInformations.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id,
                 CustomerId = (await _db.CustomerDetails.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id,
                 DriverId = (await _db.Drivers.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id,
+                TransporterId = (await _db.TransporterDetails.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id.ToString(),
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 UserId = user.Id,

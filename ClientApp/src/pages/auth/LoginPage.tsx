@@ -76,8 +76,6 @@ const LoginPage = () => {
             const isAuthenticated = data?.IsAuthenticated ?? data?.isAuthenticated;
             const token = data?.Token ?? data?.token;
             const message = data?.Message ?? data?.message;
-            const userId = data?.UserId ?? data?.userId;
-            const appUserId = data?.AppUserId ?? data?.appUserId;
             const roles: string[] = data?.Roles ?? data?.roles ?? [];
 
             if (!isAuthenticated || !token) {
@@ -120,8 +118,6 @@ const LoginPage = () => {
             const isAuthenticated = data?.IsAuthenticated ?? data?.isAuthenticated;
             const token = data?.Token ?? data?.token;
             const message = data?.Message ?? data?.message;
-            const userId = data?.UserId ?? data?.userId;
-            const appUserId = data?.AppUserId ?? data?.appUserId;
             const roles: string[] = data?.Roles ?? data?.roles ?? [];
 
             if (!isAuthenticated || !token) {

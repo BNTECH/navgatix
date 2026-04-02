@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { DollarSign, Truck, Clock, Wallet, Send, MapPin, Route, History } from 'lucide-react';
+import { DollarSign, Truck, Clock, Wallet, Send, MapPin, Route, History, MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../api/apiClient';
+import ChatPanel from '../../components/ChatPanel';
 
 type RideStatus = 'request_for_ride' | 'driver_assigned' | 'driver_arriving' | 'ride_started' | 'ride_completed' | 'cancelled';
 
@@ -34,6 +35,7 @@ const DriverDashboard = () => {
     const [withdrawAmount, setWithdrawAmount] = useState('');
     const [isTracking, setIsTracking] = useState(false);
     const [currentPosition, setCurrentPosition] = useState<{ lat: number; lng: number } | null>(null);
+    const [chatBookingId, setChatBookingId] = useState<number | null>(null);
 
     const driverUserId = user?.userId || user?.UserId || user?.id || '';
     const driverId = user?.driverId || user?.DriverId || '';
@@ -316,7 +318,8 @@ const DriverDashboard = () => {
     if (!user) return null;
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans p-6">
+        <>
+            <div className="min-h-screen bg-slate-50 font-sans p-6">
             <div className="max-w-7xl mx-auto">
                 <div className="mb-8">
                     <h1 className="text-3xl font-extrabold text-slate-900">Driver Control Panel</h1>
@@ -403,6 +406,13 @@ const DriverDashboard = () => {
                                             >
                                                 Reject Ride
                                             </button>
+                                            <button
+                                                onClick={() => setChatBookingId(ride.id)}
+                                                className="rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold px-5 py-3 flex items-center gap-2 hover:bg-slate-50 transition-colors"
+                                            >
+                                                <MessageCircle className="h-4 w-4 text-emerald-600" />
+                                                Chat
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -422,9 +432,17 @@ const DriverDashboard = () => {
                                             <p className="text-sm font-bold text-slate-900">Ride #{currentRide.id}</p>
                                             <p className="text-xs text-slate-500 mt-1">Current status: {currentRide.rideStatus}</p>
                                         </div>
-                                        <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-primary-700 border border-primary-200">
-                                            {currentRide.customerName || 'Assigned Customer'}
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-primary-700 border border-primary-200">
+                                                {currentRide.customerName || 'Assigned Customer'}
+                                            </span>
+                                            <button
+                                                onClick={() => setChatBookingId(currentRide.id)}
+                                                className="flex items-center gap-1.5 rounded-full bg-emerald-600 text-white px-3 py-1 text-xs font-bold hover:bg-emerald-500 transition-colors"
+                                            >
+                                                <MessageCircle className="h-3 w-3" /> Chat
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="mt-4 space-y-2 text-sm text-slate-600">
                                         <div className="flex items-start gap-2">
@@ -529,6 +547,22 @@ const DriverDashboard = () => {
                 </div>
             </div>
         </div>
+
+        {/* Live Chat Panel */}
+        {chatBookingId !== null && (
+            <ChatPanel
+                bookingId={chatBookingId as number}
+                currentUserName={
+                    user?.firstName ||
+                    user?.name ||
+                    user?.UserName ||
+                    user?.userName ||
+                    'Driver'
+                }
+                onClose={() => setChatBookingId(null)}
+            />
+        )}
+        </>
     );
 };
 

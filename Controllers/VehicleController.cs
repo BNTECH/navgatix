@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
@@ -74,6 +74,12 @@ namespace navgatix.Controllers
         {
             return Ok(await _vehicleService.RejectRideRequestAsync(bookingId, driverUserId));
         }
+        [HttpPatch("{bookingId}/transporterRideRequest/reject")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RejectRideRequestByTransporter(long bookingId, [FromQuery] string transporterUserId)
+        {
+            return Ok(await _vehicleService.RejectRideRequestByTransporterAsync(bookingId, transporterUserId));
+        }
         [HttpGet("ride/{bookingId}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetRide(long bookingId)
@@ -103,6 +109,12 @@ namespace navgatix.Controllers
         public async Task<IActionResult> GetDriverRideRequests(string driverUserId)
         {
             return Ok(await _vehicleService.GetDriverRideRequestsAsync(driverUserId));
+        }
+        [HttpGet("transporterRideRequests/{transporterUserId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetTransporterRideRequests(string transporterUserId)
+        {
+            return Ok(await _vehicleService.GetTransporterRideRequestsAsync(transporterUserId));
         }
         [HttpPost("saveLiveVehicleTracking")]
         [AllowAnonymous]

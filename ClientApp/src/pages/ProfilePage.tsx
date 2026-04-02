@@ -51,7 +51,6 @@ const ProfilePage = () => {
     const [ctTyreType, setCtTyreType] = useState<number | ''>('');
 
     // Master Data
-    const [vehicleTypes, setVehicleTypes] = useState<NormalizedCommonType[]>([]);
     const [bodyTypes, setBodyTypes] = useState<NormalizedCommonType[]>([]);
     const [tyreTypes, setTyreTypes] = useState<NormalizedCommonType[]>([]);
     
@@ -83,7 +82,6 @@ const ProfilePage = () => {
         const fetchMasterData = async () => {
             try {
                 const masterTypes = await fetchVehicleCommonTypes();
-                setVehicleTypes(masterTypes.vehicleTypes);
                 setBodyTypes(masterTypes.bodyTypes);
                 setTyreTypes(masterTypes.tyreTypes);
             } catch (err) {
@@ -554,22 +552,6 @@ const ProfilePage = () => {
                                             placeholder="Vehicle number (e.g. KA01AB1234)"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                            <Truck className="h-4 w-4 text-primary-600" /> Vehicle Type <span className="text-slate-400 font-normal text-xs">(Optional)</span>
-                                        </label>
-                                        <select
-                                            value={ctVehicleType}
-                                            onChange={(e) => setCtVehicleType(e.target.value ? Number(e.target.value) : '')}
-                                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 focus:border-primary-500 outline-none"
-                                        >
-                                            <option value="">Select Vehicle Type</option>
-                                            {Array.isArray(vehicleTypes) && vehicleTypes.map((type) => (
-                                                <option key={type.id} value={type.id}>{type.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    
                                     <div>
                                         <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
                                             <Layout className="h-4 w-4 text-primary-600" /> Body Type <span className="text-slate-400 font-normal text-xs">(Optional)</span>

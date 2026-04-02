@@ -46,11 +46,22 @@ namespace satguruApp.Service.Services
                 }
 
                 var vehicleVM = await (from vehicle in _db.Vehicles where (vehicle.Id == vehicleView.Id || (vehicle.VehicleNumber.ToLower() == vehicleView.VehicleNumber.ToLower())) select vehicle).FirstOrDefaultAsync();
-                if (vehicleView.Id == Guid.Empty && vehicleVM == null)
+                if (vehicleVM == null)
                 {
                     vehicleVM = new Vehicle();
-                    vehicleVM.Id = vehicleView.Id = Guid.NewGuid();
+                    vehicleVM.Id = Guid.NewGuid();
                     vehicleVM.TransporterId = vehicleView.TransporterId;
+
+                    // Resolve TransporterId from UserId if not provided
+                    if (vehicleVM.TransporterId == 0 && !string.IsNullOrEmpty(vehicleView.UserId))
+                    {
+                        var transporter = await _db.TransporterDetails.FirstOrDefaultAsync(t => t.UserId == vehicleView.UserId);
+                        if (transporter != null)
+                        {
+                            vehicleVM.TransporterId = transporter.Id;
+                        }
+                    }
+
                     vehicleVM.VehicleName = vehicleView.VehicleName;
                     vehicleVM.CurrentLatitude = vehicleView.CurrentLatitude;
                     vehicleVM.RCNumber = vehicleView.RCNumber;
@@ -70,8 +81,19 @@ namespace satguruApp.Service.Services
                 }
                 else
                 {
+                    if (vehicleView.TransporterId > 0)
+                    {
+                        vehicleVM.TransporterId = vehicleView.TransporterId;
+                    }
+                    else if (!string.IsNullOrEmpty(vehicleView.UserId))
+                    {
+                        var transporter = await _db.TransporterDetails.FirstOrDefaultAsync(t => t.UserId == vehicleView.UserId);
+                        if (transporter != null)
+                        {
+                            vehicleVM.TransporterId = transporter.Id;
+                        }
+                    }
                     vehicleView.Id = vehicleVM.Id;
-                    vehicleVM.TransporterId = vehicleView.TransporterId;
                     vehicleVM.VehicleName = vehicleView.VehicleName;
                     vehicleVM.CurrentLatitude = vehicleView.CurrentLatitude;
                     vehicleVM.RCNumber = vehicleView.RCNumber;
@@ -312,6 +334,70 @@ namespace satguruApp.Service.Services
                 })
                 .ToListAsync();
         }
+
+        public async Task<List<BookingViewModel>> GetTransporterRideRequestsAsync(string transporterUserId)
+        {
+            if (string.IsNullOrWhiteSpace(transporterUserId))
+            {
+                return new List<BookingViewModel> { new BookingViewModel { Message = "Transporter user id is required." } };
+            }
+
+            var transporter = await _db.TransporterDetails.FirstOrDefaultAsync(x => x.UserId == transporterUserId);
+            if (transporter == null) return new List<BookingViewModel>();
+
+            var driverUserIds = await _db.Drivers
+                .Where(d => d.TransporterId == transporter.Id && d.IsDeleted != true && d.UserId != null)
+                .Select(d => d.UserId)
+                .ToListAsync();
+
+            if (!driverUserIds.Any()) return new List<BookingViewModel>();
+
+            var pendingBookingIds = await _db.Notifications
+                .Where(x => driverUserIds.Contains(x.UserId) && x.Title == "New Ride Request" && x.IsRead != true)
+                .Select(x => x.Message)
+                .ToListAsync();
+
+            var bookingIds = pendingBookingIds
+                .Select(ParseBookingIdFromNotification)
+                .Where(x => x > 0)
+                .Distinct()
+                .ToList();
+
+            if (!bookingIds.Any()) return new List<BookingViewModel>();
+
+            return await _db.Bookings
+                .Where(book => bookingIds.Contains(book.Id)
+                    && book.IsDeleted != true
+                    && book.CT_BookingStatus == RideStatus.RequestForRide
+                    && !book.DriverId.HasValue)
+                .OrderByDescending(book => book.CreatedAt)
+                .Select(book => new BookingViewModel
+                {
+                    Id = book.Id,
+                    CustomerId = book.CustomerId,
+                    CustomerName = book.CustomerName,
+                    VehicleId = book.VehicleId,
+                    DriverId = book.DriverId,
+                    PickupAddress = book.PickupAddress,
+                    PickupLat = book.PickupLat,
+                    PickupLng = book.PickupLng,
+                    DropAddress = book.DropAddress,
+                    DropLat = book.DropLat,
+                    DropLng = book.DropLng,
+                    GoodsType = book.GoodsType,
+                    GoodsWeight = book.GoodsWeight,
+                    EstimatedFare = book.EstimatedFare,
+                    FinalFare = book.FinalFare,
+                    CT_BookingStatus = book.CT_BookingStatus,
+                    RideStatus = RideStatus.ToName(book.CT_BookingStatus),
+                    ScheduledTime = book.ScheduledTime,
+                    CreatedAt = book.CreatedAt,
+                    IsAvailable = book.IsAvailable,
+                    IsDeleted = book.IsDeleted,
+                })
+                .ToListAsync();
+        }
+
         public async Task<List<BookingViewModel>> GetDriverRidesAsync(string driverUserId)
         {
             if (string.IsNullOrWhiteSpace(driverUserId))
@@ -437,6 +523,15 @@ namespace satguruApp.Service.Services
                 liveVehicle.DistanceRemainingKm = trackingSnapshot.DistanceRemainingKm;
                 liveVehicle.EstimatedArrivalMinutes = trackingSnapshot.EstimatedArrivalMinutes;
                 await _trackingNotificationService.NotifyDriverLocationUpdatedAsync(trackingSnapshot);
+            }
+
+            if (_trackingNotificationService != null && vehicle.TransporterId.HasValue && vehicle.TransporterId.Value > 0)
+            {
+                var transporterObj = await _db.TransporterDetails.FirstOrDefaultAsync(t => t.Id == vehicle.TransporterId.Value);
+                if (transporterObj != null && !string.IsNullOrEmpty(transporterObj.UserId))
+                {
+                    await _trackingNotificationService.NotifyFleetLocationUpdatedAsync(transporterObj.UserId, liveVehicle);
+                }
             }
 
             return liveVehicle;
@@ -764,6 +859,33 @@ namespace satguruApp.Service.Services
             var vm = MapBookingToViewModel(booking);
             vm.Message = "Ride status updated.";
             return vm;
+        }
+
+        public async Task<BookingViewModel> RejectRideRequestByTransporterAsync(long bookingId, string transporterUserId)
+        {
+            if (string.IsNullOrWhiteSpace(transporterUserId)) return new BookingViewModel { Id = bookingId, Message = "transporterUserId is required." };
+
+            var transporter = await _db.TransporterDetails.FirstOrDefaultAsync(x => x.UserId == transporterUserId);
+            if (transporter == null) return new BookingViewModel { Id = bookingId, Message = "Transporter not found." };
+
+            var driverUserIds = await _db.Drivers.Where(d => d.TransporterId == transporter.Id && d.UserId != null).Select(d => d.UserId).ToListAsync();
+            if (!driverUserIds.Any()) return new BookingViewModel { Id = bookingId, Message = "No drivers found." };
+
+            var notifications = await _db.Notifications
+                .Where(x => driverUserIds.Contains(x.UserId) && x.Title == "New Ride Request" && x.IsRead != true && x.Message != null && x.Message.Contains($"Ride #{bookingId}"))
+                .ToListAsync();
+
+            if (!notifications.Any()) return new BookingViewModel { Id = bookingId, Message = "Pending ride request not found." };
+
+            foreach (var n in notifications)
+            {
+                n.IsRead = true;
+                _db.Notifications.Update(n);
+            }
+
+            await _db.SaveChangesAsync();
+
+            return new BookingViewModel { Id = bookingId, Message = "Ride request rejected." };
         }
 
         public async Task<BookingViewModel> RejectRideRequestAsync(long bookingId, string driverUserId)

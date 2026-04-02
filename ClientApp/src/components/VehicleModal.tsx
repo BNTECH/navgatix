@@ -16,6 +16,9 @@ const VehicleModal: React.FC<VehicleModalProps> = ({ isOpen, onClose, onSuccess,
     const [ctVehicleType, setCtVehicleType] = useState<number | ''>('');
     const [ctBodyType, setCtBodyType] = useState<number | ''>('');
     const [ctTyreType, setCtTyreType] = useState<number | ''>('');
+    const [rcNumber, setRcNumber] = useState('');
+    const [insuranceExpiry, setInsuranceExpiry] = useState('');
+    const [rcDocument, setRcDocument] = useState<File | null>(null);
     
     const [vehicleTypes, setVehicleTypes] = useState<any[]>([]);
     const [bodyTypes, setBodyTypes] = useState<any[]>([]);
@@ -63,6 +66,9 @@ const VehicleModal: React.FC<VehicleModalProps> = ({ isOpen, onClose, onSuccess,
             setCtVehicleType('');
             setCtBodyType('');
             setCtTyreType('');
+            setRcNumber('');
+            setInsuranceExpiry('');
+            setRcDocument(null);
             setError('');
             setSuccess(false);
         }
@@ -81,12 +87,32 @@ const VehicleModal: React.FC<VehicleModalProps> = ({ isOpen, onClose, onSuccess,
 
         setIsSubmitting(true);
         try {
-            await apiClient.post('/Vehicle/saveVehicle', {
+            let docs = [];
+            if (rcDocument) {
+                const docForm = new FormData();
+                docForm.append('UploadFile', rcDocument);
+                docForm.append('DocumentName', 'Vehicle_RC');
+                try {
+                    const docRes = await apiClient.post('/Document/upload', docForm, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                    });
+                    if (docRes.data) {
+                        docs.push(docRes.data);
+                    }
+                } catch (e) {
+                    console.error('Document upload failed:', e);
+                }
+            }
+
+            await apiClient.post('/Vehicle/vehicleRegistration', {
                 VehicleName: vehicleName.trim(),
                 VehicleNumber: vehicleNumber.trim().toUpperCase(),
                 Ct_VehicleType: Number(ctVehicleType),
                 CtBodyType: ctBodyType ? Number(ctBodyType) : null,
                 CtTyreType: ctTyreType ? Number(ctTyreType) : null,
+                RCNumber: rcNumber.trim(),
+                InsuranceExpiry: insuranceExpiry ? new Date(insuranceExpiry).toISOString() : null,
+                Documents: docs,
                 UserId: userId || localStorage.getItem('userId')
             });
             setSuccess(true);
@@ -205,6 +231,54 @@ const VehicleModal: React.FC<VehicleModalProps> = ({ isOpen, onClose, onSuccess,
                                             <option key={tt.id} value={tt.id}>{tt.name}</option>
                                         ))}
                                     </select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">RC Number <span className="text-slate-400 font-normal">(Optional)</span></label>
+                                    <input
+                                        type="text"
+                                        value={rcNumber}
+                                        onChange={(e) => setRcNumber(e.target.value.toUpperCase())}
+                                        className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 focus:border-primary-500 outline-none uppercase transition-all"
+                                        placeholder="e.g. MH12AB1234"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Insurance Expiry <span className="text-slate-400 font-normal">(Optional)</span></label>
+                                    <input
+                                        type="date"
+                                        value={insuranceExpiry}
+                                        onChange={(e) => setInsuranceExpiry(e.target.value)}
+                                        className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 focus:border-primary-500 outline-none transition-all bg-white"
+                                    />
+                                </div>
+
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Upload RC Document <span className="text-slate-400 font-normal">(Optional)</span></label>
+                                    <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:bg-slate-50 transition-colors">
+                                        <input
+                                            type="file"
+                                            id="rcUpload"
+                                            className="hidden"
+                                            onChange={(e) => {
+                                                if (e.target.files && e.target.files[0]) {
+                                                    setRcDocument(e.target.files[0]);
+                                                }
+                                            }}
+                                        />
+                                        <label htmlFor="rcUpload" className="cursor-pointer flex flex-col items-center">
+                                            <div className="w-12 h-12 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center mb-3">
+                                                <Database className="h-6 w-6" />
+                                            </div>
+                                            <span className="text-sm font-medium text-slate-900">
+                                                {rcDocument ? rcDocument.name : 'Click to select RC Document'}
+                                            </span>
+                                            <p className="text-xs text-slate-500 mt-1">PDF, JPG, PNG (Max 5MB)</p>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
 

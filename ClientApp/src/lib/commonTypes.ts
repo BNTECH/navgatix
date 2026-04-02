@@ -36,6 +36,9 @@ export const normalizeCommonTypes = (data: any): NormalizedCommonType[] => {
     console.warn('normalizeCommonTypes: items is not an array', items);
     return [];
   }
+
+  const seenNames = new Set<string>();
+
   return items
     .map((item): NormalizedCommonType | null => {
       const candidateId =
@@ -51,9 +54,17 @@ export const normalizeCommonTypes = (data: any): NormalizedCommonType[] => {
         return null;
       }
 
+      const name = pickName(item) || `Item ${parsedId}`;
+      const nameLower = name.toLowerCase().trim();
+
+      if (seenNames.has(nameLower)) {
+        return null;
+      }
+      seenNames.add(nameLower);
+
       return {
         id: parsedId!,
-        name: pickName(item) || `Item ${parsedId}`,
+        name,
         code: item.code ?? item.Code,
         keys: item.keys ?? item.Keys,
         valueStr: item.valueStr ?? item.ValueStr,
