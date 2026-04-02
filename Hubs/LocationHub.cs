@@ -14,5 +14,15 @@ namespace navgatix.Hubs
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"Ride_{bookingId}");
         }
+
+        public async Task JoinTransporter(string userId)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"TransporterUser_{userId}");
+        }
+
+        public async Task LeaveTransporter(string userId)
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"TransporterUser_{userId}");
+        }
     }
 }

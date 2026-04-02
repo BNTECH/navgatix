@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using satguruApp.DLL.Models;
 using satguruApp.Service.Services.Interfaces;
 using satguruApp.Service.ViewModels;
@@ -24,7 +24,7 @@ namespace satguruApp.Service.Services
             try
             {
                 cmn =
-            await (from common in _db.CommonTypes where common.IsDeleted == false select common).Select(x => new CommonTypeViewModel
+            await (from common in _db.CommonTypes where (common.IsDeleted ?? false) == false select common).Select(x => new CommonTypeViewModel
             {
                 Id = x.Id,
                 Name = x.Name ?? "",
@@ -52,7 +52,7 @@ namespace satguruApp.Service.Services
         }
         public async Task<CommonTypeViewModel> GetById(int id)
         {
-            return await (from common in _db.CommonTypes where common.IsDeleted == false && common.Id == id select common).Select(x => new CommonTypeViewModel
+            return await (from common in _db.CommonTypes where (common.IsDeleted ?? false) == false && common.Id == id select common).Select(x => new CommonTypeViewModel
             {
                 Id = x.Id,
                 Name = x.Name ?? "",
@@ -93,9 +93,9 @@ namespace satguruApp.Service.Services
         }
         public async Task<List<CommonTypeWithKeyViewModel>> GetCommonTypeListWithAndId(String code, string flag)
         {
-            return await (from common in _db.CommonTypes
+            var list = await (from common in _db.CommonTypes
                           join comParent in _db.CommonTypes on common.CTID equals comParent.Id
-                          where common.IsDeleted == false && comParent.Code == code && (string.IsNullOrEmpty(flag) || common.Code.ToLower().Contains(flag.ToLower()))
+                          where (common.IsDeleted ?? false) == false && comParent.Code == code && (string.IsNullOrEmpty(flag) || common.Code.ToLower().Contains(flag.ToLower()))
                           select new CommonTypeWithKeyViewModel
                           {
                               Id = common.Id,
@@ -109,6 +109,12 @@ namespace satguruApp.Service.Services
                               OrderBy = common.OrderBy.GetValueOrDefault(),
                               ValueStr = common.ValueStr ?? ""
                           }).ToListAsync();
+
+            // Deduplicate by Name (case-insensitive) to resolve the UI issue
+            return list.GroupBy(x => x.Name.ToLower().Trim())
+                       .Select(g => g.OrderBy(x => x.OrderBy).First())
+                       .OrderBy(x => x.OrderBy)
+                       .ToList();
         }
         public async Task<List<CommonTypeViewModel>> FilterCommonTypes(CommonTypeSearchViewModel model)
         {

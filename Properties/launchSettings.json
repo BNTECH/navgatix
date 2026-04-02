@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "http://json.schemastore.org/launchsettings.json",
   "iisSettings": {
     "windowsAuthentication": false,
@@ -16,7 +16,6 @@
       "applicationUrl": "https://localhost:7048",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-     // "ASPNETCORE_ENVIRONMENT": "Production"
       }
     },
     "IIS Express": {
@@ -24,7 +23,6 @@
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-     // "ASPNETCORE_ENVIRONMENT": "Production"
       }
     }
   }

@@ -1,4 +1,4 @@
-﻿using satguruApp.DLL.Models;
+using satguruApp.DLL.Models;
 using satguruApp.Service.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -19,9 +19,11 @@ namespace satguruApp.Service.Services.Interfaces
         Task<BookingViewModel> RequestRideAsync(BookingViewModel model);
         Task<BookingViewModel> UpdateRideStatusAsync(long bookingId, string status, Guid? driverId = null);
         Task<BookingViewModel> RejectRideRequestAsync(long bookingId, string driverUserId);
+        Task<BookingViewModel> RejectRideRequestByTransporterAsync(long bookingId, string transporterUserId);
         Task<BookingViewModel> GetRideAsync(long bookingId);
         Task<List<BookingViewModel>> BookingVehicleRides(string userId);
         Task<List<BookingViewModel>> GetDriverRideRequestsAsync(string driverUserId);
+        Task<List<BookingViewModel>> GetTransporterRideRequestsAsync(string transporterUserId);
         Task<List<BookingViewModel>> GetDriverRidesAsync(string driverUserId);
         Task<LiveVehicleTrackingViewModel> SaveLiveVehicleTrackings(LiveVehicleTrackingViewModel liveVehicle);
         Task<List<LiveVehicleTrackingViewModel>> GetLiveVehicleTrackings(Guid vehicleId, string deviceId);

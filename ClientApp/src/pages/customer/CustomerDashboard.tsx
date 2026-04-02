@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Anchor, ArrowRightLeft, CheckCircle, ClipboardList, Database, History, Info, Layout, MapPin, Navigation, Package, Search, Truck, User, X } from 'lucide-react';
+import { Anchor, ArrowRightLeft, CheckCircle, ClipboardList, Database, History, Info, Layout, MapPin, MessageCircle, Navigation, Package, Search, Truck, User, X } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 import { fetchVehicleCommonTypes } from '../../services/vehicleCommonTypes';
 import { normalizeCommonTypes, type NormalizedCommonType } from '../../lib/commonTypes';
@@ -8,6 +8,7 @@ import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import TrackingMap from '../../components/TrackingMap';
+import ChatPanel from '../../components/ChatPanel';
 
 // Fix for default marker icon in react-leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -97,6 +98,7 @@ const CustomerDashboard = () => {
     const [paymentDrafts, setPaymentDrafts] = useState<Record<number, string>>({});
     const [disputeDrafts, setDisputeDrafts] = useState<Record<number, string>>({});
     const [trackingBooking, setTrackingBooking] = useState<any>(null);
+    const [chatBookingId, setChatBookingId] = useState<number | null>(null);
 
     useEffect(() => {
         const userStr = localStorage.getItem('user');
@@ -345,7 +347,8 @@ const CustomerDashboard = () => {
     const productPicklist = productTypes.length ? productTypes : FALLBACK_PRODUCT_TYPES;
 
     return (
-        <div className="min-h-screen bg-slate-50 py-8 font-sans">
+        <>
+            <div className="min-h-screen bg-slate-50 py-8 font-sans">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="mb-8 overflow-hidden rounded-[2rem] bg-slate-900 text-white shadow-2xl shadow-slate-300/40">
                     <div className="grid gap-8 px-8 py-10 lg:grid-cols-[1.3fr_0.9fr] lg:px-10">
@@ -539,6 +542,14 @@ const CustomerDashboard = () => {
                                                         Track Live Location
                                                     </button>
                                                 )}
+                                                {/* Chat button – always visible once a shipment exists */}
+                                                <button
+                                                    onClick={() => setChatBookingId(shipment.id)}
+                                                    className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                                                >
+                                                    <MessageCircle className="h-4 w-4 text-emerald-600" />
+                                                    Chat with Driver
+                                                </button>
                                             </div>
                                         ))}
                                     </div>
@@ -897,6 +908,22 @@ const CustomerDashboard = () => {
                 </div>
             )}
         </div>
+
+        {/* Live Chat Panel */}
+        {chatBookingId !== null && (
+            <ChatPanel
+                bookingId={chatBookingId as number}
+                currentUserName={
+                    user?.firstName ||
+                    user?.name ||
+                    user?.company ||
+                    user?.UserName ||
+                    'Customer'
+                }
+                onClose={() => setChatBookingId(null)}
+            />
+        )}
+        </>
     );
 };
 

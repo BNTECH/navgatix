@@ -136,36 +136,60 @@ namespace satguruApp.Service.Services
 
         public async Task<List<UserInfoViewModel>> GetUserList(UserSearchViewModel userSearch)
         {
-            return await (from user in _db.UserInformations
-                          join accountType in _db.AccountTypes on user.AccountTypeId equals accountType.Id into accountTypes
-                          from accountType in accountTypes.DefaultIfEmpty()
-                          join gender in _db.Genders on user.GenderId equals gender.Id into genders
-                          from gender in genders.DefaultIfEmpty()
-                          where (user.IsDeleted == false || user.IsDeleted == null) && (userSearch.Mobile == null || userSearch.Mobile == user.Mobile) && (string.IsNullOrEmpty(userSearch.Email) || userSearch.Email.ToLower() == user.Email.ToLower()) && string.IsNullOrEmpty(userSearch.Name) || (user.FirstName + " " + (string.IsNullOrEmpty(user.MiddleName) ? "" : user.MiddleName) + " " + user.LastName).ToLower().Contains(userSearch.Name.ToLower()) && (string.IsNullOrEmpty(userSearch.PhoneNumber) || user.PhoneNumber.Contains(userSearch.PhoneNumber)) && (string.IsNullOrEmpty(userSearch.Search) || (user.FirstName + " " + (string.IsNullOrEmpty(user.MiddleName) ? "" : user.MiddleName) + " " + user.LastName).ToLower().Contains(userSearch.Search.ToLower()) || (user.Email.ToLower().Contains(userSearch.Search.ToLower())))
-                          select new UserInfoViewModel
+            var query = from user in _db.UserInformations
+                        join accountType in _db.AccountTypes on user.AccountTypeId equals accountType.Id into accountTypes
+                        from accountType in accountTypes.DefaultIfEmpty()
+                        join gender in _db.Genders on user.GenderId equals gender.Id into genders
+                        from gender in genders.DefaultIfEmpty()
+                        where (user.IsDeleted == false || user.IsDeleted == null)
+                        select new { user, accountType, gender };
+
+            // Apply filters
+            if (!string.IsNullOrEmpty(userSearch.RoleName))
+            {
+                query = query.Where(x => x.accountType.Name == userSearch.RoleName);
+            }
+
+            if (!string.IsNullOrEmpty(userSearch.TransporterUserId))
+            {
+                // To filter drivers for a specific transporter
+                var transporter = await _db.TransporterDetails.FirstOrDefaultAsync(t => t.UserId == userSearch.TransporterUserId);
+                if (transporter != null)
+                {
+                    var driverUserIds = await _db.Drivers.Where(d => d.TransporterId == transporter.Id).Select(d => d.UserId).ToListAsync();
+                    query = query.Where(x => driverUserIds.Contains(x.user.UserId));
+                }
+            }
+
+            if (userSearch.Mobile != null) query = query.Where(x => x.user.Mobile == userSearch.Mobile);
+            if (!string.IsNullOrEmpty(userSearch.Email)) query = query.Where(x => x.user.Email.ToLower() == userSearch.Email.ToLower());
+            if (!string.IsNullOrEmpty(userSearch.Name)) query = query.Where(x => (x.user.FirstName + " " + x.user.LastName).ToLower().Contains(userSearch.Name.ToLower()));
+            if (!string.IsNullOrEmpty(userSearch.Search)) query = query.Where(x => (x.user.FirstName + " " + x.user.LastName).ToLower().Contains(userSearch.Search.ToLower()) || x.user.Email.ToLower().Contains(userSearch.Search.ToLower()));
+
+            return await query.Select(x => new UserInfoViewModel
                           {
-                              FirstName = user.FirstName,
-                              LastName = user.LastName,
-                              Name = user.FirstName + (!string.IsNullOrEmpty(user.LastName) ? (" " + user.LastName) : ""),
-                              MiddleName = user.MiddleName,
-                              Email = user.Email,
-                              PhoneNumber = user.PhoneNumber,
-                              Mobile = user.Mobile,
-                              AccountTypeId = user.AccountTypeId,
-                              UserId = user.UserId,
-                              DOB = user.DOB,
-                              IsDeleted = user.IsDeleted,
-                              CreatedDate = user.CreatedDate,
-                              UpdatedDate = user.UpdatedDate,
-                              WhatsAppLink = user.WhatsAppLink,
-                              TwiterLink = user.TwiterLink,
-                              FacebookLink = user.FacebookLink,
-                              InstagramLink = user.InstagramLink,
-                              WebsiteLink = user.WebsiteLink,
-                              Company = user.Company,
-                              GenderId = user.GenderId,
-                              Gender = gender.Name,
-                              AccountTypeName = accountType.Name
+                              FirstName = x.user.FirstName,
+                              LastName = x.user.LastName,
+                              Name = x.user.FirstName + (!string.IsNullOrEmpty(x.user.LastName) ? (" " + x.user.LastName) : ""),
+                              MiddleName = x.user.MiddleName,
+                              Email = x.user.Email,
+                              PhoneNumber = x.user.PhoneNumber,
+                              Mobile = x.user.Mobile,
+                              AccountTypeId = x.user.AccountTypeId,
+                              UserId = x.user.UserId,
+                              DOB = x.user.DOB,
+                              IsDeleted = x.user.IsDeleted,
+                              CreatedDate = x.user.CreatedDate,
+                              UpdatedDate = x.user.UpdatedDate,
+                              WhatsAppLink = x.user.WhatsAppLink,
+                              TwiterLink = x.user.TwiterLink,
+                              FacebookLink = x.user.FacebookLink,
+                              InstagramLink = x.user.InstagramLink,
+                              WebsiteLink = x.user.WebsiteLink,
+                              Company = x.user.Company,
+                              GenderId = x.user.GenderId,
+                              Gender = x.gender.Name,
+                              AccountTypeName = x.accountType.Name
                           }).ToListAsync();
         }
         public async Task<List<UserInfoViewModel>> GetUserDetailList(UserSearchViewModel userSearch)

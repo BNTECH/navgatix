@@ -15,7 +15,8 @@ namespace navgatix.SeedData
         {
             new ParentSeed("Vehicle Type", "VEHTYP", "vehicle_type", 1, "Parent category for vehicle types"),
             new ParentSeed("Body Type", "BDTYP", "body_type", 2, "Parent category for vehicle body types"),
-            new ParentSeed("Vehicle Tyre", "VEHTYR", "tyre_type", 3, "Parent category for vehicle tyre configurations")
+            new ParentSeed("Vehicle Tyre", "VEHTYR", "tyre_type", 3, "Parent category for vehicle tyre configurations"),
+            new ParentSeed("Product Type", "PRODTYP", "product_type", 4, "Parent category for common cargo/product types")
         };
 
         private static readonly ChildSeed[] VehicleTypeChildren = new[]
@@ -55,6 +56,18 @@ namespace navgatix.SeedData
             new ChildSeed("VEHTYR", "16 Tyre", "TYR006", 6),
             new ChildSeed("VEHTYR", "18 Tyre", "TYR007", 7),
             new ChildSeed("VEHTYR", "22 Tyre", "TYR008", 8)
+        };
+
+        private static readonly ChildSeed[] ProductTypeChildren = new[]
+        {
+            new ChildSeed("PRODTYP", "Electronics", "PRD001", 1),
+            new ChildSeed("PRODTYP", "Furniture", "PRD002", 2),
+            new ChildSeed("PRODTYP", "Groceries", "PRD003", 3),
+            new ChildSeed("PRODTYP", "Machinery", "PRD004", 4),
+            new ChildSeed("PRODTYP", "Raw Materials", "PRD005", 5),
+            new ChildSeed("PRODTYP", "Pharmaceuticals", "PRD006", 6),
+            new ChildSeed("PRODTYP", "Textiles / Clothing", "PRD007", 7),
+            new ChildSeed("PRODTYP", "Others", "PRD008", 8)
         };
 
         public static void Seed(IServiceProvider serviceProvider)
@@ -105,6 +118,7 @@ namespace navgatix.SeedData
             var children = VehicleTypeChildren
                 .Concat(BodyTypeChildren)
                 .Concat(TyreTypeChildren)
+                .Concat(ProductTypeChildren)
                 .ToList();
 
             var now = DateTime.UtcNow;
@@ -117,8 +131,17 @@ namespace navgatix.SeedData
                     continue;
                 }
 
-                var exists = await db.CommonTypes.AnyAsync(ct => ct.Code == childSeed.Code && !(ct.IsDeleted ?? false));
-                if (exists) continue;
+                var existingChild = await db.CommonTypes.FirstOrDefaultAsync(ct => ct.Code == childSeed.Code && !(ct.IsDeleted ?? false));
+                if (existingChild != null)
+                {
+                    // Ensure CTID is correctly linked even if record existed but was unlinked
+                    if (existingChild.CTID != parent.Id)
+                    {
+                        existingChild.CTID = parent.Id;
+                        db.CommonTypes.Update(existingChild);
+                    }
+                    continue;
+                }
 
                 newChildren.Add(new CommonType
                 {

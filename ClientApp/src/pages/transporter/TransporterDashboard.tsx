@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../api/apiClient';
+import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import {
     Users,
     Truck,
@@ -16,18 +17,80 @@ import {
     Bell,
     AlertTriangle,
     CheckCircle,
-    XCircle
+    XCircle,
+    Package
 } from 'lucide-react';
 import VehicleModal from '../../components/VehicleModal';
+import DriverModal from '../../components/DriverModal';
+import LiveFleetMap from '../../components/LiveFleetMap';
+import TransporterRideRequests from '../../components/TransporterRideRequests';
+import TransporterReports from '../../components/TransporterReports';
+
+type TransporterSummary = {
+    totalFleet: number;
+    activeDrivers: number;
+    ongoingTrips: number;
+    pendingApprovals: number;
+    totalRides: number;
+    totalEarnings: number;
+};
+
+const emptySummary: TransporterSummary = {
+    totalFleet: 0,
+    activeDrivers: 0,
+    ongoingTrips: 0,
+    pendingApprovals: 0,
+    totalRides: 0,
+    totalEarnings: 0,
+};
+
+type FleetRow = {
+    vehicleId: string;
+    vehicleNumber?: string;
+    vehicleName?: string;
+    vehicleTypeName?: string;
+    driverId?: string;
+    driverName?: string;
+    driverPhone?: string;
+    rideStatus?: string;
+    routeSummary?: string;
+    vehicleCompletedRides?: number;
+    vehicleEarnings?: number;
+    driverCompletedRides?: number;
+    driverEarnings?: number;
+    latitude?: number;
+    longitude?: number;
+    liveUpdatedAt?: string;
+    liveStatus?: string;
+};
 
 const TransporterDashboard = () => {
-    const [activeTab, setActiveTab] = useState<'overview' | 'drivers' | 'vehicles'>('overview');
-    const [vehicles, setVehicles] = useState<any[]>([]);
+    const [activeTab, setActiveTab] = useState<'overview' | 'drivers' | 'vehicles' | 'requests' | 'reports'>('overview');
     const [currentUser, setCurrentUser] = useState<any>(null);
+    const [fleetSummary, setFleetSummary] = useState<TransporterSummary>(emptySummary);
+    const [fleetRows, setFleetRows] = useState<FleetRow[]>([]);
     const [withdrawPaymentId, setWithdrawPaymentId] = useState('');
     const [rideIdForDisputes, setRideIdForDisputes] = useState('');
     const [disputes, setDisputes] = useState<any[]>([]);
     const [isVehicleModalOpen, setIsVehicleModalOpen] = useState(false);
+    const [isDriverModalOpen, setIsDriverModalOpen] = useState(false);
+    const formatCurrency = (value: number = 0) => `₹ ${Number(value).toLocaleString('en-IN')}`;
+    const formatLastSeen = (value?: string) => {
+        if (!value) return 'No data';
+        const parsed = new Date(value);
+        if (isNaN(parsed.getTime())) return 'No data';
+        return parsed.toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' });
+    };
+
+    const getStatusStyles = (status?: string) => {
+        const s = (status || 'Available').toLowerCase();
+        if (s.includes('trip') || s.includes('started') || s.includes('arriving') || s.includes('progress')) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        if (s.includes('transit') || s.includes('assigned')) return 'bg-blue-50 text-blue-700 border-blue-200';
+        if (s.includes('maintenance')) return 'bg-orange-50 text-orange-700 border-orange-200';
+        if (s.includes('cancel') || s.includes('reject')) return 'bg-red-50 text-red-700 border-red-200';
+        return 'bg-slate-100 text-slate-700 border-slate-300';
+    };
+
     const navigate = useNavigate();
 
 
@@ -35,24 +98,120 @@ const TransporterDashboard = () => {
         const userStr = localStorage.getItem('user');
         if (userStr) {
             setCurrentUser(JSON.parse(userStr));
-        } else {
-            // Optional: navigate('/login');
         }
-
-        fetchDashboardData();
     }, []);
 
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = useCallback(async () => {
+        const userId = currentUser?.userId || currentUser?.UserId;
+        if (!userId) return;
+
         try {
-            // Fetch vehicle list - adjust payload as needed by your backend mapping
-            const res = await apiClient.post('/Vehicle/getVehicleList', {});
-            if (res.data) {
-                setVehicles(Array.isArray(res.data) ? res.data : []);
-            }
+            const [summaryRes, fleetRes] = await Promise.all([
+                apiClient.get('/Transport/getDashboardSummary', { params: { userId } }),
+                apiClient.get('/Transport/getFleetOverview', { params: { userId } }),
+            ]);
+
+            const summaryPayload = summaryRes.data ?? {};
+            setFleetSummary({
+                totalFleet: summaryPayload.TotalFleet ?? summaryPayload.totalFleet ?? 0,
+                activeDrivers: summaryPayload.ActiveDrivers ?? summaryPayload.activeDrivers ?? 0,
+                ongoingTrips: summaryPayload.OngoingTrips ?? summaryPayload.ongoingTrips ?? 0,
+                pendingApprovals: summaryPayload.PendingApprovals ?? summaryPayload.pendingApprovals ?? 0,
+                totalRides: summaryPayload.TotalRides ?? summaryPayload.totalRides ?? 0,
+                totalEarnings: summaryPayload.TotalEarnings ?? summaryPayload.totalEarnings ?? 0,
+            });
+
+            const rawFleet = Array.isArray(fleetRes.data) ? fleetRes.data : [];
+            setFleetRows(
+                rawFleet.map((item: any) => ({
+                    vehicleId: item.vehicleId ?? item.VehicleId ?? '',
+                    vehicleNumber: item.vehicleNumber ?? item.VehicleNumber,
+                    vehicleName: item.vehicleName ?? item.VehicleName,
+                    vehicleTypeName: item.vehicleTypeName ?? item.VehicleTypeName,
+                    driverId: item.driverId ?? item.DriverId,
+                    driverName: item.driverName ?? item.DriverName,
+                    driverPhone: item.driverPhone ?? item.DriverPhone,
+                    rideStatus: item.rideStatus ?? item.RideStatus,
+                    routeSummary: item.routeSummary ?? item.RouteSummary,
+                    vehicleCompletedRides: item.vehicleCompletedRides ?? item.VehicleCompletedRides ?? 0,
+                    vehicleEarnings: item.vehicleEarnings ?? item.VehicleEarnings ?? 0,
+                    driverCompletedRides: item.driverCompletedRides ?? item.DriverCompletedRides ?? 0,
+                    driverEarnings: item.driverEarnings ?? item.DriverEarnings ?? 0,
+                    latitude: item.latitude ?? item.Latitude,
+                    longitude: item.longitude ?? item.Longitude,
+                    liveUpdatedAt: item.liveUpdatedAt ?? item.LiveUpdatedAt,
+                    liveStatus: item.liveStatus ?? item.LiveStatus,
+                }))
+            );
         } catch (err) {
-            console.error('Error fetching dashboard data:', err);
+            console.error('Error fetching transporter dashboard data:', err);
         }
-    };
+    }, [currentUser]);
+
+    useEffect(() => {
+        if (currentUser) {
+            fetchDashboardData();
+        }
+    }, [currentUser, fetchDashboardData]);
+
+    useEffect(() => {
+        const userId = currentUser?.userId || currentUser?.UserId;
+        if (!userId) return;
+
+        const connection = new HubConnectionBuilder()
+            .withUrl(`${apiClient.defaults.baseURL?.replace('/api', '')}/hubs/location`)
+            .configureLogging(LogLevel.Information)
+            .withAutomaticReconnect()
+            .build();
+
+        connection.start()
+            .then(() => {
+                console.log('Connected to fleet location hub');
+                connection.invoke('JoinTransporter', userId);
+            })
+            .catch(err => console.error('SignalR Connection Error: ', err));
+
+        connection.on('fleetLocationUpdated', (tracking: any) => {
+            setFleetRows(prevRows => prevRows.map(row => 
+                row.vehicleId === tracking.vehicleId || row.vehicleId === tracking.VehicleId
+                    ? { ...row, latitude: tracking.latitude || tracking.Latitude, longitude: tracking.longitude || tracking.Longitude, liveUpdatedAt: new Date().toISOString() }
+                    : row
+            ));
+        });
+
+        return () => {
+            if (connection) {
+                connection.invoke('LeaveTransporter', userId).then(() => connection.stop()).catch(() => connection.stop());
+            }
+        };
+    }, [currentUser]);
+
+    const liveVehiclesReporting = useMemo(
+        () => fleetRows.filter((row) => typeof row.latitude === 'number' && typeof row.longitude === 'number').length,
+        [fleetRows]
+    );
+
+    const assignedDriversCount = useMemo(
+        () => fleetRows.filter((row) => row.driverName && row.driverName !== 'Unassigned').length,
+        [fleetRows]
+    );
+
+    const latestLivePing = useMemo<Date | null>(() => {
+        let latest: Date | null = null;
+        fleetRows.forEach((row) => {
+            if (!row.liveUpdatedAt) return;
+            const parsed = new Date(row.liveUpdatedAt);
+            if (isNaN(parsed.getTime())) return;
+            if (latest === null || parsed > latest) {
+                latest = parsed;
+            }
+        });
+        return latest;
+    }, [fleetRows]);
+
+    const lastPingLabel = latestLivePing
+        ? latestLivePing.toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })
+        : 'No live ping yet';
 
 
     const handleLogout = () => {
@@ -93,10 +252,10 @@ const TransporterDashboard = () => {
     };
 
     const stats = [
-        { label: 'Total Fleet', value: '24', icon: Truck, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
-        { label: 'Active Drivers', value: '18', icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
-        { label: 'Ongoing Trips', value: '12', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-        { label: 'Pending Approvals', value: '5', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
+        { label: 'Total Fleet', value: fleetSummary.totalFleet, icon: Truck, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
+        { label: 'Active Drivers', value: fleetSummary.activeDrivers, icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
+        { label: 'Ongoing Trips', value: fleetSummary.ongoingTrips, icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
+        { label: 'Pending Approvals', value: fleetSummary.pendingApprovals, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
     ];
 
     return (
@@ -110,6 +269,50 @@ const TransporterDashboard = () => {
                         </div>
                         <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700">Navgatix</span>
                     </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div className="premium-card p-6 border border-slate-100 bg-white">
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Total Rides</p>
+                            <p className="text-3xl font-black text-slate-900">{fleetSummary.totalRides}</p>
+                            <p className="text-sm text-slate-500 mt-1">Completed trips across your fleet</p>
+                        </div>
+                        <div className="premium-card p-6 border border-slate-100 bg-white">
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Total Earnings</p>
+                            <p className="text-3xl font-black text-slate-900">{formatCurrency(fleetSummary.totalEarnings)}</p>
+                            <p className="text-sm text-slate-500 mt-1">Verified generation from completed rides</p>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-6 lg:grid-cols-[2fr,1fr] mb-8">
+                        <div className="premium-card p-6 bg-white shadow-lg border border-slate-100">
+                            <div className="flex justify-between items-start gap-4 mb-4">
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900">Live Fleet Map</h3>
+                                    <p className="text-sm text-slate-500">Track vehicle locations and driver status.</p>
+                                </div>
+                                <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">{liveVehiclesReporting} reporting</span>
+                            </div>
+                            <LiveFleetMap vehicles={fleetRows} />
+                        </div>
+                        <div className="premium-card p-6 bg-white shadow-lg border border-slate-100 space-y-4">
+                            <h3 className="text-lg font-bold text-slate-900">Live Signals</h3>
+                            <div className="space-y-3 text-sm">
+                                <div className="flex justify-between items-center text-slate-500">
+                                    <span>Vehicles with location</span>
+                                    <span className="font-semibold text-slate-900">{liveVehiclesReporting}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-slate-500">
+                                    <span>Drivers assigned</span>
+                                    <span className="font-semibold text-slate-900">{assignedDriversCount}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-slate-500">
+                                    <span>Last ping</span>
+                                    <span className="font-semibold text-slate-900">{lastPingLabel}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 <div className="p-6">
@@ -136,8 +339,18 @@ const TransporterDashboard = () => {
                             <Truck className={`h-5 w-5 ${activeTab === 'vehicles' ? 'text-primary-600' : ''}`} />
                             Vehicle Fleet
                         </button>
-                        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200">
-                            <FileText className="h-5 w-5" />
+                        <button
+                            onClick={() => setActiveTab('requests')}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'requests' ? 'bg-primary-50 text-primary-700 font-semibold shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+                        >
+                            <Package className={`h-5 w-5 ${activeTab === 'requests' ? 'text-primary-600' : ''}`} />
+                            Ride Requests
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('reports')}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'reports' ? 'bg-primary-50 text-primary-700 font-semibold shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+                        >
+                            <FileText className={`h-5 w-5 ${activeTab === 'reports' ? 'text-primary-600' : ''}`} />
                             Reports
                         </button>
                     </nav>
@@ -185,7 +398,7 @@ const TransporterDashboard = () => {
                             <button className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/10 transition-colors">
                                 <Bell className="h-5 w-5" />
                             </button>
-                            <button className="bg-white text-slate-900 hover:bg-slate-50 px-5 py-2.5 rounded-lg border border-white/20 font-semibold shadow-lg shadow-black/10 flex items-center gap-2 transition-colors">
+                            <button onClick={() => setIsDriverModalOpen(true)} className="bg-white text-slate-900 hover:bg-slate-50 px-5 py-2.5 rounded-lg border border-white/20 font-semibold shadow-lg shadow-black/10 flex items-center gap-2 transition-colors">
                                 <Plus className="h-5 w-5" />
                                 Add Driver
                             </button>
@@ -262,6 +475,7 @@ const TransporterDashboard = () => {
                     </div>
 
                     {/* Main Section */}
+                    {(activeTab === 'overview' || activeTab === 'vehicles') && (
                     <div className="premium-card overflow-hidden">
                         <div className="p-6 border-b border-slate-100 flex sm:flex-row flex-col sm:justify-between items-start sm:items-center gap-4 bg-white">
                             <div>
@@ -289,8 +503,8 @@ const TransporterDashboard = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {vehicles.length > 0 ? (
-                                        vehicles.map((item, index) => (
+                                    {fleetRows.length > 0 ? (
+                                        fleetRows.map((item, index) => (
                                             <tr key={index} className="hover:bg-slate-50/80 transition-colors group cursor-pointer">
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-3">
@@ -299,7 +513,7 @@ const TransporterDashboard = () => {
                                                         </div>
                                                         <div>
                                                             <div className="font-bold text-slate-900 group-hover:text-primary-600 transition-colors">{item.vehicleNumber || 'Unknown ID'}</div>
-                                                            <div className="text-xs font-medium text-slate-500">{item.vehicleModel || 'Unknown Model'}</div>
+                                                            <div className="text-xs font-medium text-slate-500">{item.vehicleName || 'Unknown Model'}</div>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -314,11 +528,11 @@ const TransporterDashboard = () => {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <div className="text-sm font-medium text-slate-600">N/A</div>
+                                                    <div className="text-sm font-medium text-slate-600">{item.routeSummary || 'N/A'}</div>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <span className="px-2.5 py-1 bg-slate-100 text-slate-700 border border-slate-300 rounded-full text-xs font-bold">
-                                                        {item.status || 'Available'}
+                                                    <span className={`px-2.5 py-1 border rounded-full text-xs font-bold ${getStatusStyles(item.rideStatus)}`}>
+                                                        {item.rideStatus || 'Available'}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
@@ -383,8 +597,44 @@ const TransporterDashboard = () => {
                         </div>
                     </div>
                 </div>
+                    )}
+                    {activeTab === 'drivers' && (
+                        <div className="premium-card overflow-hidden">
+                            <div className="p-6 bg-white border-b border-slate-100">
+                                <h2 className="text-lg font-bold text-slate-900">Manage Drivers</h2>
+                                <p className="text-sm text-slate-500 mt-1">View and manage your onboarded drivers.</p>
+                            </div>
+                            <div className="p-6 bg-white">
+                                <p className="text-slate-500 text-sm">Driver list synced. Use the <strong className="text-slate-700">Add Driver</strong> button in the top right to onboard new drivers to your fleet.</p>
+                            </div>
+                        </div>
+                    )}
+                    {activeTab === 'requests' && (
+                        <div className="premium-card overflow-hidden">
+                            <div className="p-6 bg-white border-b border-slate-100 mb-4">
+                                <h2 className="text-lg font-bold text-slate-900">Ride Requests</h2>
+                                <p className="text-sm text-slate-500 mt-1">Manage and assign incoming orders matching your fleet radius.</p>
+                            </div>
+                            <div className="px-6 pb-6">
+                                <TransporterRideRequests userId={currentUser?.userId || currentUser?.UserId} fleetRows={fleetRows} />
+                            </div>
+                        </div>
+                    )}
+                    {activeTab === 'reports' && (
+                        <div className="premium-card overflow-hidden">
+                            <div className="p-6 bg-white border-b border-slate-100 mb-4">
+                                <h2 className="text-lg font-bold text-slate-900">Analytics & Reports</h2>
+                                <p className="text-sm text-slate-500 mt-1">Real-time performance metrics and fleet activity reports.</p>
+                            </div>
+                            <div className="px-6 pb-6">
+                                <TransporterReports userId={currentUser?.userId || currentUser?.UserId} />
+                            </div>
+                        </div>
+                    )}
+                </div>
             </main>
 
+            <DriverModal isOpen={isDriverModalOpen} onClose={() => setIsDriverModalOpen(false)} onSuccess={fetchDashboardData} transporterId={currentUser?.userId || currentUser?.id || ''} transporterUserId={currentUser?.userId || currentUser?.id || ''} />
             <VehicleModal 
                 isOpen={isVehicleModalOpen} 
                 onClose={() => setIsVehicleModalOpen(false)} 
@@ -397,3 +647,4 @@ const TransporterDashboard = () => {
 };
 
 export default TransporterDashboard;
+
