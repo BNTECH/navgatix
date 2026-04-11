@@ -39,7 +39,6 @@ namespace navgatix
         }
         public void ConfigureServices(IServiceCollection services)
         {
-
             services.AddDbContext<SatguruDBContext>(options =>
                    options.UseSqlServer(
                        Configuration.GetConnectionString("DefaultConnection"),
@@ -126,7 +125,7 @@ namespace navgatix
                         "http://localhost:3000",
                         "capacitor://localhost",
                         "http://localhost",
-                         "https://localhost:7048"
+                        "https://localhost:7048"
                     )
                     .AllowAnyHeader()
                     .AllowAnyMethod()
