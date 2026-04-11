@@ -39,23 +39,9 @@ namespace navgatix
         }
         public void ConfigureServices(IServiceCollection services)
         {
-
-            var useLocalDb = Configuration.GetValue<bool>("UseLocalDatabase");
-            var localConnectionString = Configuration.GetConnectionString("LocalConnection");
-            var defaultConnectionString = Configuration.GetConnectionString("DefaultConnection");
-
-            var effectiveConnectionString = useLocalDb && !string.IsNullOrWhiteSpace(localConnectionString)
-                ? localConnectionString
-                : defaultConnectionString;
-
-            if (string.IsNullOrWhiteSpace(effectiveConnectionString))
-            {
-                throw new InvalidOperationException("SQL Server connection string is not configured.");
-            }
-
             services.AddDbContext<SatguruDBContext>(options =>
                    options.UseSqlServer(
-                       effectiveConnectionString,
+                       Configuration.GetConnectionString("DefaultConnection"),
                        b =>
                        {
                            b.MigrationsAssembly(typeof(SatguruDBContext).Assembly.FullName); //ApplicationDbContext
