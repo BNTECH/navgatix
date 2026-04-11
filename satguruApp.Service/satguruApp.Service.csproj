@@ -42,6 +42,12 @@
   <PackageReference Include="WindowsAzure.Storage" Version="9.3.3" />
 </ItemGroup>
 
+<ItemGroup>
+  <Content Include="Firebase\navgatix-service-account.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
+</ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\satguruApp.DLL\satguruApp.DLL.csproj" />
     <ProjectReference Include="..\satguruApp.Helpers\satguruApp.Helpers.csproj" />

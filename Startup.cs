@@ -40,9 +40,22 @@ namespace navgatix
         public void ConfigureServices(IServiceCollection services)
         {
 
+            var useLocalDb = Configuration.GetValue<bool>("UseLocalDatabase");
+            var localConnectionString = Configuration.GetConnectionString("LocalConnection");
+            var defaultConnectionString = Configuration.GetConnectionString("DefaultConnection");
+
+            var effectiveConnectionString = useLocalDb && !string.IsNullOrWhiteSpace(localConnectionString)
+                ? localConnectionString
+                : defaultConnectionString;
+
+            if (string.IsNullOrWhiteSpace(effectiveConnectionString))
+            {
+                throw new InvalidOperationException("SQL Server connection string is not configured.");
+            }
+
             services.AddDbContext<SatguruDBContext>(options =>
                    options.UseSqlServer(
-                       Configuration.GetConnectionString("DefaultConnection"),
+                       effectiveConnectionString,
                        b =>
                        {
                            b.MigrationsAssembly(typeof(SatguruDBContext).Assembly.FullName); //ApplicationDbContext
@@ -126,7 +139,7 @@ namespace navgatix
                         "http://localhost:3000",
                         "capacitor://localhost",
                         "http://localhost",
-                         "https://localhost:7048"
+                        "https://localhost:7048"
                     )
                     .AllowAnyHeader()
                     .AllowAnyMethod()
