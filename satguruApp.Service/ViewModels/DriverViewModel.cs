@@ -53,6 +53,7 @@ namespace satguruApp.Service.ViewModels
         public int? CTTyreType { get; set; }
         public string? PANCardUrl { get; set; }
         public string? ProfileStatus { get; set; }
+        public bool? IsOnline { get; set; }
     }
     public class TransporterViewModel : DriverViewModel
     {

@@ -15,5 +15,6 @@ namespace satguruApp.Service.ViewModels
         public string? GSTNumber { get; set; }
         public DateTime? DOB { get; set; }
         public string? Provider { get; set; }
+        public bool? IsOnline { get; set; }
     }
 }

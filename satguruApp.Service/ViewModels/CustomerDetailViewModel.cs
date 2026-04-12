@@ -42,6 +42,7 @@ namespace satguruApp.Service.ViewModels
         
         public string? Name { get; set; }
         public string? Phone { get; set; }
+        public bool? IsOnline { get; set; }
         public string? ProfilePic { get; set; }
 
         public virtual UserInfoViewModel User { get; set; }

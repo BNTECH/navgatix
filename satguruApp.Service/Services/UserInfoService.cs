@@ -67,6 +67,7 @@ namespace satguruApp.Service.Services
             target.Description = userInfo.Description ?? target.Description;
             target.ProfilePic = userInfo.ProfilePic ?? target.ProfilePic;
             target.IsDeleted = false;
+            target.IsOnline = userInfo.IsOnline;
             target.UpdatedDate = DateTime.UtcNow;
 
             if (isNewRecord)
@@ -123,7 +124,8 @@ namespace satguruApp.Service.Services
                                   Company = user.Company,
                                   GenderId = user.GenderId,
                                   Gender = gender.Name,
-                                  AccountTypeName = accountType.Name
+                                  AccountTypeName = accountType.Name,
+                                  IsOnline = user.IsOnline
                               }).FirstOrDefaultAsync();
 
             }
@@ -167,30 +169,31 @@ namespace satguruApp.Service.Services
             if (!string.IsNullOrEmpty(userSearch.Search)) query = query.Where(x => (x.user.FirstName + " " + x.user.LastName).ToLower().Contains(userSearch.Search.ToLower()) || x.user.Email.ToLower().Contains(userSearch.Search.ToLower()));
 
             return await query.Select(x => new UserInfoViewModel
-                          {
-                              FirstName = x.user.FirstName,
-                              LastName = x.user.LastName,
-                              Name = x.user.FirstName + (!string.IsNullOrEmpty(x.user.LastName) ? (" " + x.user.LastName) : ""),
-                              MiddleName = x.user.MiddleName,
-                              Email = x.user.Email,
-                              PhoneNumber = x.user.PhoneNumber,
-                              Mobile = x.user.Mobile,
-                              AccountTypeId = x.user.AccountTypeId,
-                              UserId = x.user.UserId,
-                              DOB = x.user.DOB,
-                              IsDeleted = x.user.IsDeleted,
-                              CreatedDate = x.user.CreatedDate,
-                              UpdatedDate = x.user.UpdatedDate,
-                              WhatsAppLink = x.user.WhatsAppLink,
-                              TwiterLink = x.user.TwiterLink,
-                              FacebookLink = x.user.FacebookLink,
-                              InstagramLink = x.user.InstagramLink,
-                              WebsiteLink = x.user.WebsiteLink,
-                              Company = x.user.Company,
-                              GenderId = x.user.GenderId,
-                              Gender = x.gender.Name,
-                              AccountTypeName = x.accountType.Name
-                          }).ToListAsync();
+            {
+                FirstName = x.user.FirstName,
+                LastName = x.user.LastName,
+                Name = x.user.FirstName + (!string.IsNullOrEmpty(x.user.LastName) ? (" " + x.user.LastName) : ""),
+                MiddleName = x.user.MiddleName,
+                Email = x.user.Email,
+                PhoneNumber = x.user.PhoneNumber,
+                Mobile = x.user.Mobile,
+                AccountTypeId = x.user.AccountTypeId,
+                UserId = x.user.UserId,
+                DOB = x.user.DOB,
+                IsDeleted = x.user.IsDeleted,
+                CreatedDate = x.user.CreatedDate,
+                UpdatedDate = x.user.UpdatedDate,
+                WhatsAppLink = x.user.WhatsAppLink,
+                TwiterLink = x.user.TwiterLink,
+                FacebookLink = x.user.FacebookLink,
+                InstagramLink = x.user.InstagramLink,
+                WebsiteLink = x.user.WebsiteLink,
+                Company = x.user.Company,
+                GenderId = x.user.GenderId,
+                Gender = x.gender.Name,
+                AccountTypeName = x.accountType.Name,
+                IsOnline = x.user.IsOnline
+            }).ToListAsync();
         }
         public async Task<List<UserInfoViewModel>> GetUserDetailList(UserSearchViewModel userSearch)
         {
@@ -231,6 +234,7 @@ namespace satguruApp.Service.Services
                               Description = userInfo.Description,
                               ProfilePic = userInfo.ProfilePic,
                               AccountTypeName = accountType.Name,
+                              IsOnline = userInfo.IsOnline
                           }).ToListAsync();
 
         }
@@ -271,6 +275,7 @@ namespace satguruApp.Service.Services
                                        AccountTypeName = accountType != null ? accountType.Name : "",
                                        Description = userInfo != null ? userInfo.Description : "",
                                        ProfilePic = userInfo != null ? userInfo.ProfilePic : "",
+                                       IsOnline = userInfo.IsOnline ?? false
                                    }).FirstOrDefaultAsync();
 
             return userDeail;
