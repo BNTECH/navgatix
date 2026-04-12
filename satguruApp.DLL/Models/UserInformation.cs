@@ -50,4 +50,5 @@ public partial class UserInformation
     public string Description { get; set; }
 
     public string ProfilePic { get; set; }
+    public bool? IsOnline { get; set; }
 }

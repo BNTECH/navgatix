@@ -149,7 +149,7 @@ namespace navgatix.Controllers
             var userRoles = await _userService.UpdateUserRoleAsync(userRoleVM);
             string subPath = @"~/uploaddocs/";
 
-            var userResult = await _userInfoService.SaveAsync(new UserInfoViewModel { TransporterId = model.TransporterId, UserId = model.UserId, FirstName = model.FirstName, AccountTypeId = model.AccountTypeId, AppUserId = model.AppUserId.GetValueOrDefault(), AccountTypeName = model.AccountTypeName, Company = model.Company, DOB = model.DOB, Email = model.Email, GenderId = model.GenderId, FacebookLink = model.FacebookLink, PhoneNumber = model.PhoneNumber, LastName = model.LastName, LicenseExpiry = model.LicenseExpiry, LicenseNumber = model.LicenseNumber, MiddleName = model.MiddleName, Mobile = model.Mobile, Name = model.Name });
+            var userResult = await _userInfoService.SaveAsync(new UserInfoViewModel { TransporterId = model.TransporterId, UserId = model.UserId, FirstName = model.FirstName, AccountTypeId = model.AccountTypeId, AppUserId = model.AppUserId.GetValueOrDefault(), AccountTypeName = model.AccountTypeName, Company = model.Company, DOB = model.DOB, Email = model.Email, GenderId = model.GenderId, FacebookLink = model.FacebookLink, PhoneNumber = model.PhoneNumber, LastName = model.LastName, LicenseExpiry = model.LicenseExpiry, LicenseNumber = model.LicenseNumber, MiddleName = model.MiddleName, Mobile = model.Mobile, Name = model.Name, IsOnline = model.IsOnline });
             var result = await _transportService.SaveDriverAsync(model);
             return Ok(result);
         }
@@ -184,7 +184,8 @@ namespace navgatix.Controllers
                 ProfilePic = model.ProfilePic,
                 GenderId = model.GenderId,
                 Address = model.WhatsAppLink, // Using WhatsAppLink as placeholder for address
-                Description = model.PANCardUrl != null ? $"PAN_URL:{model.PANCardUrl}" : null
+                Description = model.PANCardUrl != null ? $"PAN_URL:{model.PANCardUrl}" : null,
+                IsOnline = model.IsOnline
             };
             await _userInfoService.SaveAsync(userInfo);
 
@@ -270,7 +271,8 @@ namespace navgatix.Controllers
                 Address = model.Address,
                 City = model.City,
                 State = model.State,
-                Pincode = model.Pincode
+                Pincode = model.Pincode,
+                IsOnline = model.IsOnline
             });
 
             // Update Customer Detail record (simplifies internal state)
@@ -382,6 +384,7 @@ namespace navgatix.Controllers
                 GSTNumber = model.GSTNumber,
                 DOB = model.DOB,
                 AppUserId = result.AppUserId ?? 0,
+                IsOnline = model    .IsOnline
             };
 
             await _userInfoService.SaveAsync(userInfoModel);

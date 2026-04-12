@@ -54,6 +54,7 @@ namespace satguruApp.Service.ViewModels
         public string? State { get; set; }
         public string? Address { get; set; }
         public string? Pincode { get; set; }
+        public bool? IsOnline { get; set; }
 
     }
     public class UserProfilePicViewModel
