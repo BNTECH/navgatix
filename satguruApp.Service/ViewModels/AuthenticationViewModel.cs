@@ -11,6 +11,10 @@ namespace satguruApp.Service.ViewModels
         public string? Message { get; set; }
         public bool IsAuthenticated { get; set; }
         public string? UserName { get; set; }
+        public string? TransporterName { get; set; }
+        public string? CustomerName { get; set; }
+        public string? DriverName { get; set; }
+
         public string? UserId { get; set; }
         public int? AppUserId { get; set; }
         public string? TransporterId { get; set; }
@@ -24,5 +28,6 @@ namespace satguruApp.Service.ViewModels
         public string? FirstName { get; set; }
         public bool EmailVerified { get; set; }
         public bool IsNewUser { get; set; }
+        public string? RoleName { get; set; }
     }
 }

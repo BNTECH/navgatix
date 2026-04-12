@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Razorpay.Api;
 using satguruApp.DLL.Models;
 using satguruApp.Service.Authorization;
 using satguruApp.Service.Services.Interfaces;
@@ -179,9 +180,16 @@ namespace satguruApp.Service.Services
             }
             if (await _userManager.CheckPasswordAsync(user, model.Password))
             {
+                var transporter = await _db.TransporterDetails.FirstOrDefaultAsync(x => x.UserId == user.Id);
+                var driver = await _db.Drivers.FirstOrDefaultAsync(x => x.UserId == user.Id);
+                var customer = await _db.CustomerDetails.FirstOrDefaultAsync(x => x.UserId == user.Id);
                 authenticationModel.UserInfoId = (await _db.UserInformations.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id;
-                authenticationModel.CustomerId = (await _db.CustomerDetails.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id;
-                authenticationModel.DriverId = (await _db.Drivers.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id;
+                authenticationModel.CustomerId = customer?.Id;
+                authenticationModel.DriverId = driver?.Id;
+                authenticationModel.TransporterId = Convert.ToString(transporter?.Id);
+                authenticationModel.TransporterName = transporter?.CompanyName;
+                authenticationModel.DriverName = driver?.Name;
+                authenticationModel.CustomerName = customer?.CompanyName;
                 authenticationModel.FirstName = user.FirstName;
                 authenticationModel.LastName = user.LastName;
                 authenticationModel.UserId = user.Id;
@@ -324,7 +332,7 @@ namespace satguruApp.Service.Services
                 var passStatus = await _userManager.CheckPasswordAsync(user, model.Password);
                 if (passStatus)
                 {
-                   
+
                     TokenRequestViewModel tokenModel = new TokenRequestViewModel() { Email = user.Email, UserName = model.UserName, Password = model.Password };
                     var token = await GetTokenAsync(tokenModel);
                     return token;
@@ -482,12 +490,39 @@ namespace satguruApp.Service.Services
 
         private async Task<AuthenticationViewModel> BuildAuthenticationViewModelAsync(ApplicationUser user)
         {
+            var userInfo = await _db.UserInformations.FirstOrDefaultAsync(x => x.UserId == user.Id);
+            var customerDetail = await _db.CustomerDetails.FirstOrDefaultAsync(x => x.UserId == user.Id);
+            var driverDetail = await _db.Drivers.FirstOrDefaultAsync(x => x.UserId == user.Id);
+            var transporterDetail = await _db.TransporterDetails.FirstOrDefaultAsync(x => x.UserId == user.Id);
+
+            var rolesList = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
+
+            // Prioritize the role based on the AccountTypeId in UserInformation
+            string resolvedRole = null;
+            if (userInfo?.AccountTypeId != null)
+            {
+                var accountType = await _db.AccountTypes.FirstOrDefaultAsync(a => a.Id == userInfo.AccountTypeId.Value);
+                if (accountType != null)
+                {
+                    resolvedRole = accountType.Name;
+                }
+            }
+
+            // Fallback to Identity Roles if AccountTypeId mapping failed or was missing
+            if (string.IsNullOrWhiteSpace(resolvedRole))
+            {
+                resolvedRole = rolesList.FirstOrDefault();
+            }
+
             var authenticationModel = new AuthenticationViewModel
             {
-                UserInfoId = (await _db.UserInformations.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id,
-                CustomerId = (await _db.CustomerDetails.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id,
-                DriverId = (await _db.Drivers.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id,
-                TransporterId = (await _db.TransporterDetails.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id.ToString(),
+                UserInfoId = userInfo?.Id,
+                CustomerId = customerDetail?.Id,
+                DriverId = driverDetail?.Id,
+                TransporterId = transporterDetail?.Id.ToString(),
+                TransporterName = transporterDetail?.CompanyName,
+                DriverName = driverDetail?.Name,
+                CustomerName = customerDetail?.CompanyName,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 UserId = user.Id,
@@ -496,11 +531,11 @@ namespace satguruApp.Service.Services
                 Email = user.Email,
                 UserName = user.UserName,
                 EmailVerified = user.EmailConfirmed,
+                RoleName = resolvedRole
             };
 
             JwtSecurityToken jwtSecurityToken = await CreateJwtToken(user);
             authenticationModel.Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
-            var rolesList = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
             authenticationModel.Roles = rolesList.ToList();
             return authenticationModel;
         }

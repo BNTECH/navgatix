@@ -31,10 +31,10 @@ const LoginPage = () => {
         const r = role?.toLowerCase();
         const profileStatus = data?.profileStatus || data?.ProfileStatus;
         
+        if (r === 'transporter' || data?.TransporterId || data?.transporterId) return '/transporter-dashboard';
         if (r === 'driver' || data?.DriverId || data?.driverId) {
             return profileStatus === 'Completed' ? '/driver-dashboard' : '/profile';
         }
-        if (r === 'transporter') return '/transporter-dashboard';
         if (r === 'customer' || data?.CustomerId || data?.customerId) return '/customer-portal';
         return '/';
     };
