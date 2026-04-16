@@ -32,7 +32,6 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
 
           {/* Dashboards (often have their own sidebar/navbar) */}
-          <Route path="/transporter-dashboard" element={<TransporterDashboard />} />
           <Route path="/driver-dashboard" element={<><Navbar /><DriverDashboard /></>} />
           <Route path="/customer-dashboard" element={<><Navbar /><CustomerDashboard /></>} />
           <Route path="/customer-portal" element={<><Navbar /><CustomerDashboard /></>} />
