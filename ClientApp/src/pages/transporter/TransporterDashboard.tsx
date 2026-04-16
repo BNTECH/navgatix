@@ -14,10 +14,6 @@ import {
     MoreVertical,
     FileText,
     Settings,
-    Bell,
-    AlertTriangle,
-    CheckCircle,
-    XCircle,
     Package
 } from 'lucide-react';
 import VehicleModal from '../../components/VehicleModal';
@@ -69,11 +65,11 @@ const TransporterDashboard = () => {
     const [currentUser, setCurrentUser] = useState<any>(null);
     const [fleetSummary, setFleetSummary] = useState<TransporterSummary>(emptySummary);
     const [fleetRows, setFleetRows] = useState<FleetRow[]>([]);
-    const [withdrawPaymentId, setWithdrawPaymentId] = useState('');
-    const [rideIdForDisputes, setRideIdForDisputes] = useState('');
-    const [disputes, setDisputes] = useState<any[]>([]);
     const [isVehicleModalOpen, setIsVehicleModalOpen] = useState(false);
     const [isDriverModalOpen, setIsDriverModalOpen] = useState(false);
+    const [drivers, setDrivers] = useState<any[]>([]);
+    const [vehicles, setVehicles] = useState<any[]>([]);
+    const [isLoadingFleet, setIsLoadingFleet] = useState(false);
     
     const navigate = useNavigate();
     const formatCurrency = (value: number = 0) => `₹ ${Number(value).toLocaleString('en-IN')}`;
@@ -132,11 +128,31 @@ const TransporterDashboard = () => {
         }
     }, [currentUser]);
 
+    const fetchFleetLists = useCallback(async () => {
+        const userId = currentUser?.userId || currentUser?.UserId;
+        if (!userId) return;
+
+        setIsLoadingFleet(true);
+        try {
+            const [driversRes, vehiclesRes] = await Promise.all([
+                apiClient.get('/Transport/getDriversList', { params: { userId } }),
+                apiClient.get('/Transport/getVehiclesList', { params: { userId } }),
+            ]);
+            setDrivers(Array.isArray(driversRes.data) ? driversRes.data : []);
+            setVehicles(Array.isArray(vehiclesRes.data) ? vehiclesRes.data : []);
+        } catch (err) {
+            console.error('Error fetching fleet lists:', err);
+        } finally {
+            setIsLoadingFleet(false);
+        }
+    }, [currentUser]);
+
     useEffect(() => {
         if (currentUser) {
             fetchDashboardData();
+            fetchFleetLists();
         }
-    }, [currentUser, fetchDashboardData]);
+    }, [currentUser, fetchDashboardData, fetchFleetLists]);
 
     useEffect(() => {
         const userId = currentUser?.userId || currentUser?.UserId;
@@ -201,36 +217,6 @@ const TransporterDashboard = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         navigate('/login');
-    };
-
-    const processWithdrawal = async (action: 'approve' | 'reject') => {
-        if (!withdrawPaymentId.trim()) {
-            alert('Enter withdrawal payment id.');
-            return;
-        }
-        try {
-            const payload = { paymentId: withdrawPaymentId.trim(), action };
-            const res = await apiClient.post('/DriverFinance/withdrawal/process', payload);
-            alert(res.data?.message || res.data?.Message || `Withdrawal ${action}d.`);
-            setWithdrawPaymentId('');
-        } catch (err: any) {
-            alert(err?.response?.data?.message || err?.response?.data?.Message || 'Unable to process withdrawal.');
-        }
-    };
-
-    const fetchRideDisputes = async () => {
-        if (!rideIdForDisputes.trim()) {
-            alert('Enter ride id.');
-            return;
-        }
-        try {
-            const res = await apiClient.get(`/Dispute/ride/${rideIdForDisputes.trim()}`);
-            setDisputes(Array.isArray(res.data) ? res.data : []);
-        } catch (err) {
-            console.error(err);
-            setDisputes([]);
-            alert('Unable to fetch disputes for this ride.');
-        }
     };
 
     const stats = [
@@ -447,12 +433,108 @@ const TransporterDashboard = () => {
                     )}
 
                     {activeTab === 'drivers' && (
-                        <div className="premium-card p-8 bg-white rounded-2xl shadow-sm border border-slate-100">
-                            <h2 className="text-xl font-bold text-slate-900 mb-2">Manage Drivers</h2>
-                            <p className="text-slate-500 mb-6">Onboard and monitor your dedicated driver team.</p>
-                            <div className="p-12 border-2 border-dashed border-slate-200 rounded-2xl text-center">
-                                <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                                <p className="text-slate-500 font-medium">Driver management module active. Use the top button to add new drivers.</p>
+                        <div className="premium-card overflow-hidden bg-white rounded-2xl shadow-sm border border-slate-100">
+                            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                                <div>
+                                    <h2 className="text-xl font-bold text-slate-900">Manage Drivers</h2>
+                                    <p className="text-sm text-slate-500">Onboard and monitor your dedicated driver team.</p>
+                                </div>
+                                <button onClick={() => setIsDriverModalOpen(true)} className="bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
+                                    <Plus className="h-4 w-4" /> Add Driver
+                                </button>
+                            </div>
+                            <div className="overflow-x-auto text-sm">
+                                <table className="w-full text-left">
+                                    <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                                        <tr>
+                                            <th className="px-6 py-4">Driver Name</th>
+                                            <th className="px-6 py-4">Phone</th>
+                                            <th className="px-6 py-4">License No.</th>
+                                            <th className="px-6 py-4">Status</th>
+                                            <th className="px-6 py-4 text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 text-slate-600 font-medium">
+                                        {drivers.length > 0 ? drivers.map((d) => (
+                                            <tr key={d.id} className="hover:bg-slate-50 transition-colors">
+                                                <td className="px-6 py-4 flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden">
+                                                        {d.profilePic ? <img src={d.profilePic} alt="" className="w-full h-full object-cover" /> : <Users className="h-4 w-4 text-slate-400" />}
+                                                    </div>
+                                                    <span className="text-slate-900 font-bold">{d.name}</span>
+                                                </td>
+                                                <td className="px-6 py-4">{d.phone || d.mobile || 'N/A'}</td>
+                                                <td className="px-6 py-4">{d.licenseNumber || 'None'}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-black border ${d.profileStatus === 'Approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                                                        {d.profileStatus || 'Pending'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <button className="text-slate-400 hover:text-primary-600 transition-colors"><MoreVertical className="h-5 w-5" /></button>
+                                                </td>
+                                            </tr>
+                                        )) : (
+                                            <tr>
+                                                <td colSpan={5} className="px-6 py-12 text-center text-slate-400 italic">
+                                                    {isLoadingFleet ? 'Loading drivers...' : 'No drivers onboarded yet.'}
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'vehicles' && (
+                        <div className="premium-card overflow-hidden bg-white rounded-2xl shadow-sm border border-slate-100">
+                            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                                <div>
+                                    <h2 className="text-xl font-bold text-slate-900">Vehicle Fleet</h2>
+                                    <p className="text-sm text-slate-500">Track and maintain your logistics assets.</p>
+                                </div>
+                                <button onClick={() => setIsVehicleModalOpen(true)} className="bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
+                                    <Plus className="h-4 w-4" /> New Vehicle
+                                </button>
+                            </div>
+                            <div className="overflow-x-auto text-sm">
+                                <table className="w-full text-left">
+                                    <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                                        <tr>
+                                            <th className="px-6 py-4">Vehicle No.</th>
+                                            <th className="px-6 py-4">Model/Name</th>
+                                            <th className="px-6 py-4">Type</th>
+                                            <th className="px-6 py-4">Capacity</th>
+                                            <th className="px-6 py-4">Availability</th>
+                                            <th className="px-6 py-4 text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 text-slate-600 font-medium">
+                                        {vehicles.length > 0 ? vehicles.map((v) => (
+                                            <tr key={v.id} className="hover:bg-slate-50 transition-colors">
+                                                <td className="px-6 py-4 font-bold text-slate-900">{v.vehicleNumber}</td>
+                                                <td className="px-6 py-4">{v.vehicleName}</td>
+                                                <td className="px-6 py-4">{v.vehicleTypeName}</td>
+                                                <td className="px-6 py-4">{v.capacityTons} Tons</td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-black border ${v.isAvailable ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                                                        {v.isAvailable ? 'Available' : 'Busy'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <button className="text-slate-400 hover:text-primary-600 transition-colors"><MoreVertical className="h-5 w-5" /></button>
+                                                </td>
+                                            </tr>
+                                        )) : (
+                                            <tr>
+                                                <td colSpan={6} className="px-6 py-12 text-center text-slate-400 italic">
+                                                    {isLoadingFleet ? 'Loading vehicles...' : 'No vehicles in fleet.'}
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     )}
@@ -460,7 +542,7 @@ const TransporterDashboard = () => {
                     {activeTab === 'requests' && (
                         <div className="premium-card p-6 bg-white rounded-2xl shadow-sm border border-slate-100">
                             <h2 className="text-lg font-bold text-slate-900 mb-6">Nearby Ride Requests</h2>
-                            <TransporterRideRequests userId={currentUser?.userId || currentUser?.UserId} fleetRows={fleetRows} />
+                            <TransporterRideRequests userId={currentUser?.userId || currentUser?.UserId} fleetRows={fleetRows} onAssignmentSuccess={() => { fetchDashboardData(); fetchFleetLists(); }} />
                         </div>
                     )}
 
@@ -473,11 +555,10 @@ const TransporterDashboard = () => {
                 </div>
             </main>
 
-            <DriverModal isOpen={isDriverModalOpen} onClose={() => setIsDriverModalOpen(false)} onSuccess={fetchDashboardData} transporterId={currentUser?.userId || currentUser?.id || ''} transporterUserId={currentUser?.userId || currentUser?.id || ''} />
-            <VehicleModal isOpen={isVehicleModalOpen} onClose={() => setIsVehicleModalOpen(false)} onSuccess={fetchDashboardData} userId={currentUser?.userId || currentUser?.id || ''} />
+            <DriverModal isOpen={isDriverModalOpen} onClose={() => setIsDriverModalOpen(false)} onSuccess={() => { fetchDashboardData(); fetchFleetLists(); }} transporterId={currentUser?.userId || currentUser?.id || ''} transporterUserId={currentUser?.userId || currentUser?.id || ''} />
+            <VehicleModal isOpen={isVehicleModalOpen} onClose={() => setIsVehicleModalOpen(false)} onSuccess={() => { fetchDashboardData(); fetchFleetLists(); }} userId={currentUser?.userId || currentUser?.id || ''} />
         </div>
     );
 };
 
 export default TransporterDashboard;
-

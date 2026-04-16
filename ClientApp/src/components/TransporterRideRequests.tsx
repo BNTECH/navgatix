@@ -10,18 +10,34 @@ interface FleetRow {
     driverName?: string;
     liveStatus?: string;
     rideStatus?: string;
+    latitude?: number;
+    longitude?: number;
 }
 
 interface TransporterRideRequestsProps {
     userId: string;
     fleetRows: FleetRow[];
+    onAssignmentSuccess?: () => void;
 }
 
-const TransporterRideRequests: React.FC<TransporterRideRequestsProps> = ({ userId, fleetRows }) => {
+const TransporterRideRequests: React.FC<TransporterRideRequestsProps> = ({ userId, fleetRows, onAssignmentSuccess }) => {
     const [requests, setRequests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [assigningId, setAssigningId] = useState<number | null>(null);
     const [selectedFleetMap, setSelectedFleetMap] = useState<Record<number, string>>({});
+
+    const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        if (!lat1 || !lon1 || !lat2 || !lon2) return 999999;
+        const R = 6371; // km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    };
 
     const fetchRequests = async () => {
         setLoading(true);
@@ -61,6 +77,7 @@ const TransporterRideRequests: React.FC<TransporterRideRequestsProps> = ({ userI
             await apiClient.patch(`/Vehicle/${bookingId}/rideStatus?status=driver_assigned&driverId=${driverId}`);
             alert('Ride successfully assigned to driver!');
             fetchRequests(); // refresh list
+            if (onAssignmentSuccess) onAssignmentSuccess();
         } catch (err: any) {
             alert(err?.response?.data?.message || err?.response?.data?.Message || 'Failed to assign ride.');
         } finally {
@@ -140,12 +157,43 @@ const TransporterRideRequests: React.FC<TransporterRideRequestsProps> = ({ userI
                                 value={selectedFleetMap[req.id || req.Id] || ''}
                                 onChange={(e) => setSelectedFleetMap({ ...selectedFleetMap, [req.id || req.Id]: e.target.value })}
                             >
-                                <option value="">-- View Fleet ({fleetRows.length}) --</option>
-                                {fleetRows.map(f => (
-                                    <option key={f.vehicleId || f.vehicleName} value={`${f.driverId}|${f.vehicleId}`} disabled={!f.driverName || f.driverName === 'Unassigned'}>
-                                        {f.vehicleNumber} ({f.driverName || 'No Driver'}) - {f.rideStatus || 'Available'}
-                                    </option>
-                                ))}
+                                <option value="">-- Select Available Nearness --</option>
+                                {fleetRows
+                                    .filter(f => {
+                                        const isAvailable = !f.rideStatus || f.rideStatus.toLowerCase() === 'available';
+                                        const hasDriver = f.driverId && f.driverId !== 'Unassigned';
+                                        return isAvailable && hasDriver;
+                                    })
+                                    .map(f => {
+                                        const dist = calculateDistance(
+                                            req.pickupLatitude || req.PickupLatitude,
+                                            req.pickupLongitude || req.PickupLongitude,
+                                            f.latitude || 0,
+                                            f.longitude || 0
+                                        );
+                                        return { ...f, distance: dist };
+                                    })
+                                    .sort((a, b) => a.distance - b.distance)
+                                    .map(f => (
+                                        <option key={f.vehicleId} value={`${f.driverId}|${f.vehicleId}`}>
+                                            {f.vehicleNumber} ({f.driverName}) • {f.distance < 1 ? '<1' : f.distance.toFixed(1)} km away
+                                        </option>
+                                    ))}
+                                {fleetRows.filter(f => {
+                                    const isAvailable = !f.rideStatus || f.rideStatus.toLowerCase() === 'available';
+                                    const hasDriver = f.driverId && f.driverId !== 'Unassigned';
+                                    return !(isAvailable && hasDriver);
+                                }).length > 0 && (
+                                    <optgroup label="Unavailable / No Driver">
+                                        {fleetRows
+                                            .filter(f => !(!f.rideStatus || f.rideStatus.toLowerCase() === 'available' && f.driverId && f.driverId !== 'Unassigned'))
+                                            .map(f => (
+                                                <option key={f.vehicleId} value="" disabled>
+                                                    {f.vehicleNumber} ({f.driverName || 'No Driver'}) - {f.rideStatus || 'Busy'}
+                                                </option>
+                                            ))}
+                                    </optgroup>
+                                )}
                             </select>
 
                             <div className="flex gap-2">

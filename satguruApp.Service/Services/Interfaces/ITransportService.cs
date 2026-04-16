@@ -20,5 +20,7 @@ namespace satguruApp.Service.Services.Interfaces
         Task<TransporterDashboardSummaryViewModel> GetDashboardSummary(string userId);
         Task<TransporterAnalyticsViewModel> GetTransporterAnalytics(string userId);
         Task<List<TransporterFleetItemViewModel>> GetFleetOverview(string userId);
+        Task<List<DriverViewModel>> GetDriversList(string userId);
+        Task<List<VehicleViewModel>> GetVehiclesList(string userId);
     }
 }

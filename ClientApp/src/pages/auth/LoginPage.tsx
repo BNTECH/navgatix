@@ -27,11 +27,33 @@ const LoginPage = () => {
     const [isSendingReset, setIsSendingReset] = useState(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
+    const normalizeRole = (value: any) => String(value || '').trim().toLowerCase();
+
+    // Backend can return multiple identity roles (Roles[]) plus a resolved primary role (RoleName).
+    // Use RoleName first (it is derived from AccountTypeId), then fall back to Roles[].
+    const resolveEffectiveRole = (data: any) => {
+        const explicit = data?.roleName ?? data?.RoleName ?? data?.role ?? data?.Role ?? '';
+        const explicitNorm = normalizeRole(explicit);
+        if (explicitNorm) return explicitNorm;
+
+        const roles: string[] = data?.Roles ?? data?.roles ?? [];
+        const normalized = roles.map(normalizeRole).filter(Boolean);
+        // Prefer business routing roles if present (ordering in Roles[] is not reliable).
+        for (const preferred of ['transporter', 'company', 'driver', 'customer']) {
+            if (normalized.includes(preferred)) return preferred;
+        }
+        return normalized[0] || '';
+    };
+
     const getDashboardRoute = (role: string, data?: any) => {
-        const r = role?.toLowerCase();
+        const r = normalizeRole(role);
         const profileStatus = data?.profileStatus || data?.ProfileStatus;
+        const roles: string[] = (data?.Roles ?? data?.roles ?? []).map(normalizeRole);
         
-        if (r === 'transporter' || data?.TransporterId || data?.transporterId) return '/transporter-dashboard';
+        // Transporter should win even if the user accidentally has multiple identity roles.
+        if (r === 'transporter' || r === 'company' || roles.includes('transporter') || roles.includes('company') || data?.TransporterId || data?.transporterId) {
+            return '/transporter-dashboard';
+        }
         if (r === 'driver' || data?.DriverId || data?.driverId) {
             return profileStatus === 'Completed' ? '/driver-dashboard' : '/profile';
         }
@@ -76,7 +98,6 @@ const LoginPage = () => {
             const isAuthenticated = data?.IsAuthenticated ?? data?.isAuthenticated;
             const token = data?.Token ?? data?.token;
             const message = data?.Message ?? data?.message;
-            const roles: string[] = data?.Roles ?? data?.roles ?? [];
 
             if (!isAuthenticated || !token) {
                 setError(message || 'Login failed. Please check your credentials.');
@@ -86,8 +107,8 @@ const LoginPage = () => {
             login(token, data);
             await enablePushNotifications(data);
 
-            const primaryRole = roles.length > 0 ? roles[0] : (data?.roleName ?? data?.RoleName ?? '');
-            navigate(getDashboardRoute(primaryRole, data));
+            const effectiveRole = resolveEffectiveRole(data);
+            navigate(getDashboardRoute(effectiveRole, data));
         } catch (err: any) {
             console.error(err);
             const msg =
@@ -118,7 +139,6 @@ const LoginPage = () => {
             const isAuthenticated = data?.IsAuthenticated ?? data?.isAuthenticated;
             const token = data?.Token ?? data?.token;
             const message = data?.Message ?? data?.message;
-            const roles: string[] = data?.Roles ?? data?.roles ?? [];
 
             if (!isAuthenticated || !token) {
                 setError(message || 'Google sign-in failed. If this is a new account, please register first.');
@@ -128,8 +148,8 @@ const LoginPage = () => {
             login(token, data);
             await enablePushNotifications(data);
 
-            const primaryRole = roles.length > 0 ? roles[0] : (data?.roleName ?? data?.RoleName ?? '');
-            navigate(getDashboardRoute(primaryRole, data));
+            const effectiveRole = resolveEffectiveRole(data);
+            navigate(getDashboardRoute(effectiveRole, data));
         } catch (err: any) {
             console.error(err);
             const msg =
