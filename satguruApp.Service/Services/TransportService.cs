@@ -443,6 +443,59 @@ namespace satguruApp.Service.Services
 
             return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(rawStatus.Replace('_', ' '));
         }
+
+        public async Task<List<DriverViewModel>> GetDriversList(string userId)
+        {
+            var transporter = await _db.TransporterDetails.FirstOrDefaultAsync(t => t.UserId == userId);
+            if (transporter == null) return new List<DriverViewModel>();
+
+            return await (from dvr in _db.Drivers
+                         join userInfo in _db.UserInformations on dvr.UserId equals userInfo.UserId
+                         where dvr.TransporterId == transporter.Id && dvr.IsDeleted != true
+                select new  DriverViewModel
+                {
+                    Id = dvr.Id,
+                    Name = dvr.Name,
+                    Phone = dvr.Phone,
+                    Mobile = !string.IsNullOrEmpty(dvr.Phone) ? long.Parse(new string(dvr.Phone.Where(char.IsDigit).Take(15).ToArray()) == "" ? "0" : new string(dvr.Phone.Where(char.IsDigit).Take(15).ToArray())) : 0,
+                    LicenseNumber = dvr.LicenseNumber,
+                    LicenseExpiry = dvr.LicenseExpiry,
+                    ProfilePic = dvr.PhotoUrl,
+                    ProfileStatus = dvr.ProfileStatus,
+                    IsOnline = userInfo.IsOnline,
+                    UserId = dvr.UserId
+                }).ToListAsync();
+        }
+
+        public async Task<List<VehicleViewModel>> GetVehiclesList(string userId)
+        {
+            var transporter = await _db.TransporterDetails.FirstOrDefaultAsync(t => t.UserId == userId);
+            if (transporter == null) return new List<VehicleViewModel>();
+
+            var vehicles = await _db.Vehicles
+                .Where(v => v.TransporterId == transporter.Id && v.IsDeleted != true)
+                .ToListAsync();
+
+            var typeIds = vehicles.Where(v => v.CT_VehicleType.HasValue).Select(v => v.CT_VehicleType.Value).Distinct().ToList();
+            var commonTypeNames = await _db.CommonTypes
+                .Where(ct => typeIds.Contains(ct.Id))
+                .ToDictionaryAsync(ct => ct.Id, ct => ct.Name);
+
+            return vehicles.Select(v => new VehicleViewModel
+            {
+                Id = v.Id,
+                VehicleNumber = v.VehicleNumber,
+                VehicleName = v.VehicleName,
+                CapacityTons = v.CapacityTons,
+                RCNumber = v.RCNumber,
+                IsAvailable = v.IsAvailable,
+                CT_VehicleType = v.CT_VehicleType,
+                VehicleTypeName = v.CT_VehicleType.HasValue && commonTypeNames.TryGetValue(v.CT_VehicleType.Value, out var name) ? name : "Unknown",
+                CurrentLatitude = v.CurrentLatitude,
+                CurrentLongitude = v.CurrentLongitude,
+                IsDeleted = v.IsDeleted
+            }).ToList();
+        }
     }
 }
 

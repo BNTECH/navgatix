@@ -49,5 +49,19 @@ namespace navgatix.Controllers
         {
             return Ok(await _transportService.SaveTransporterAsync(model));
         }
+
+        [HttpGet("getDriversList")]
+        public async Task<IActionResult> GetDriversList(string userId)
+        {
+            if (string.IsNullOrEmpty(userId)) return BadRequest("UserId is required.");
+            return Ok(await _transportService.GetDriversList(userId));
+        }
+
+        [HttpGet("getVehiclesList")]
+        public async Task<IActionResult> GetVehiclesList(string userId)
+        {
+            if (string.IsNullOrEmpty(userId)) return BadRequest("UserId is required.");
+            return Ok(await _transportService.GetVehiclesList(userId));
+        }
     }
 }

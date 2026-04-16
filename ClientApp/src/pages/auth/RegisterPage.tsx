@@ -11,6 +11,22 @@ const GST_REGEX = /^[0-9A-Z]{15}$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,20}$/;
 const PENDING_VERIFICATION_STORAGE_KEY = 'navgatixPendingVerification';
 
+const normalizeRole = (value: any) => String(value || '').trim().toLowerCase();
+
+// Prefer RoleName (resolved from AccountTypeId) over Roles[] ordering for routing.
+const resolveEffectiveRole = (data: any) => {
+    const explicit = data?.roleName ?? data?.RoleName ?? data?.role ?? data?.Role ?? '';
+    const explicitNorm = normalizeRole(explicit);
+    if (explicitNorm) return explicitNorm;
+
+    const roles: string[] = data?.Roles ?? data?.roles ?? [];
+    const normalized = roles.map(normalizeRole).filter(Boolean);
+    for (const preferred of ['transporter', 'company', 'driver', 'customer']) {
+        if (normalized.includes(preferred)) return preferred;
+    }
+    return normalized[0] || '';
+};
+
 type PendingVerificationState = {
     email: string;
     password: string;
@@ -250,7 +266,6 @@ const RegisterPage = () => {
             const token = data?.Token ?? data?.token;
             const userId = data?.UserId ?? data?.userId;
             const appUserId = data?.AppUserId ?? data?.appUserId;
-            const roles: string[] = data?.Roles ?? data?.roles ?? [];
 
             if (!token) {
                 setError(data?.Message || data?.message || 'Unable to complete verified login.');
@@ -264,7 +279,7 @@ const RegisterPage = () => {
             clearPendingVerification();
             await enablePushNotifications(data);
 
-            const primaryRole = roles.length > 0 ? roles[0] : (data?.roleName ?? data?.RoleName ?? '');
+            const primaryRole = resolveEffectiveRole(data);
             navigate(
                 primaryRole?.toLowerCase() === 'driver'
                     ? '/profile'
@@ -316,7 +331,6 @@ const RegisterPage = () => {
             const token = data?.Token ?? data?.token;
             const userId = data?.UserId ?? data?.userId;
             const appUserId = data?.AppUserId ?? data?.appUserId;
-            const roles: string[] = data?.Roles ?? data?.roles ?? [];
 
             if (token) {
                 clearPendingVerification();
@@ -325,7 +339,7 @@ const RegisterPage = () => {
                 localStorage.setItem('appUserId', String(appUserId || ''));
                 localStorage.setItem('user', JSON.stringify(data));
                 await enablePushNotifications(data);
-                const primaryRole = roles.length > 0 ? roles[0] : (data?.roleName ?? data?.RoleName ?? '');
+                const primaryRole = resolveEffectiveRole(data);
                 navigate(
                     primaryRole?.toLowerCase() === 'driver'
                         ? '/profile'
