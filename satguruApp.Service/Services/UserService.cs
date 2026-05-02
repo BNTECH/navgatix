@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Logging;
 using Razorpay.Api;
 using satguruApp.DLL.Models;
 using satguruApp.Service.Authorization;
@@ -11,6 +12,7 @@ using satguruApp.Service.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
@@ -31,15 +33,17 @@ namespace satguruApp.Service.Services
         private readonly SatguruDBContext _db;
         private readonly JWT _jwt;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<UserService> _logger;
         private static readonly object FirebaseAppLock = new();
         private static FirebaseAdmin.FirebaseApp? _firebaseApp;
-        public UserService(SatguruDBContext context, UserManager<ApplicationUser> userManager
-            , IOptions<JWT> jwt
-            , IConfiguration configuration
-            , RoleManager<ApplicationRole> roleManager
-            , SignInManager<ApplicationUser> signInManager,
-            IUserClaimsPrincipalFactory<ApplicationUser> userClaimFactory
-            )
+
+        public UserService(SatguruDBContext context, UserManager<ApplicationUser> userManager,
+            IOptions<JWT> jwt,
+            IConfiguration configuration,
+            RoleManager<ApplicationRole> roleManager,
+            SignInManager<ApplicationUser> signInManager,
+            IUserClaimsPrincipalFactory<ApplicationUser> userClaimFactory,
+            ILogger<UserService> logger)
         {
             _userManager = userManager;
             _roleManager = roleManager;
@@ -48,9 +52,26 @@ namespace satguruApp.Service.Services
             _db = context;
             _userClaimFactory = userClaimFactory;
             _configuration = configuration;
+            _logger = logger;
         }
-        public async Task<string> UserRegisterAsync(UserViewModel model) //UserInfoViewModel
+
+        public async Task<string> UserRegisterAsync(UserViewModel model)
         {
+            var userWithSameEmail = await _userManager.FindByEmailAsync(model.Email);
+            if (userWithSameEmail != null)
+            {
+                return $"Email {model.Email} is already registered.";
+            }
+
+            if (!string.IsNullOrEmpty(model.PhoneNumber))
+            {
+                var userWithSamePhone = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == model.PhoneNumber);
+                if (userWithSamePhone != null)
+                {
+                    return $"Phone number {model.PhoneNumber} is already registered.";
+                }
+            }
+
             var user = new ApplicationUser
             {
                 UserName = model.UserName,
@@ -58,27 +79,26 @@ namespace satguruApp.Service.Services
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 PhoneNumber = model.PhoneNumber,
-                // DOB = model.DOB,
                 NormalizedEmail = model.Email.ToUpper(),
                 NormalizedUserName = model.UserName.ToUpper(),
                 IsActive = true,
             };
-            var userWithSameEmail = await _userManager.FindByEmailAsync(model.Email);
-            if (userWithSameEmail == null)
-            {
-                try
-                {
-                    var result = await _userManager.CreateAsync(user, model.Password);
-                }
-                catch (Exception ex)
-                {
 
-                }
-                return $"User Registered with username {user.UserName}";
-            }
-            else
+            try
             {
-                return $"Email {user.Email} is already registered.";
+                var result = await _userManager.CreateAsync(user, model.Password);
+                if (result.Succeeded)
+                {
+                    return $"User Registered with username {user.UserName}";
+                }
+                else
+                {
+                    return string.Join(", ", result.Errors.Select(e => e.Description));
+                }
+            }
+            catch (Exception ex)
+            {
+                return $"Error: {ex.Message}";
             }
         }
 
@@ -87,21 +107,22 @@ namespace satguruApp.Service.Services
             var firebaseUser = await VerifyFirebaseTokenAsync(model.FirebaseIdToken);
             if (firebaseUser == null)
             {
-                return new AuthenticationViewModel
+                return new AuthenticationViewModel { IsAuthenticated = false, Message = "Invalid Firebase token." };
+            }
+
+            if (!string.IsNullOrEmpty(model.PhoneNumber))
+            {
+                var userWithSamePhone = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == model.PhoneNumber);
+                if (userWithSamePhone != null && userWithSamePhone.Email != firebaseUser.Email)
                 {
-                    IsAuthenticated = false,
-                    Message = "Invalid Firebase token.",
-                };
+                    return new AuthenticationViewModel { IsAuthenticated = false, Message = $"Phone number {model.PhoneNumber} is already registered." };
+                }
             }
 
             var localUser = await EnsureFirebaseLocalUserAsync(firebaseUser, model, allowUnverifiedEmail: true);
             if (localUser == null)
             {
-                return new AuthenticationViewModel
-                {
-                    IsAuthenticated = false,
-                    Message = "Unable to create local account.",
-                };
+                return new AuthenticationViewModel { IsAuthenticated = false, Message = "Unable to create local account." };
             }
 
             if (!string.IsNullOrWhiteSpace(model.RoleName))
@@ -126,7 +147,7 @@ namespace satguruApp.Service.Services
                 return new AuthenticationViewModel
                 {
                     IsAuthenticated = false,
-                    Message = "Invalid Firebase token.",
+                    Message = "Invalid Firebase token. Please ensure your session is fresh and your project configuration is correct."
                 };
             }
 
@@ -137,7 +158,7 @@ namespace satguruApp.Service.Services
                     IsAuthenticated = false,
                     Email = firebaseUser.Email,
                     EmailVerified = false,
-                    Message = "Please verify your email before logging in.",
+                    Message = "Please verify your email before logging in."
                 };
             }
 
@@ -149,7 +170,7 @@ namespace satguruApp.Service.Services
                     IsAuthenticated = false,
                     Email = firebaseUser.Email,
                     EmailVerified = true,
-                    Message = "No local account found for this Firebase user. Please sign up first.",
+                    Message = "No local account found for this Firebase user. Please sign up first."
                 };
             }
 
@@ -168,286 +189,181 @@ namespace satguruApp.Service.Services
         {
             var authenticationModel = new AuthenticationViewModel();
             var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
-            {
-                user = await _userManager.FindByEmailAsync(model.UserName);
-            }
+            if (user == null) { user = await _userManager.FindByEmailAsync(model.UserName); }
             if (user == null)
             {
                 authenticationModel.IsAuthenticated = false;
                 authenticationModel.Message = $"No Accounts Registered with {model.Email}.";
                 return authenticationModel;
             }
+
             if (await _userManager.CheckPasswordAsync(user, model.Password))
             {
-                var transporter = await _db.TransporterDetails.FirstOrDefaultAsync(x => x.UserId == user.Id);
-                var driver = await _db.Drivers.FirstOrDefaultAsync(x => x.UserId == user.Id);
-                var customer = await _db.CustomerDetails.FirstOrDefaultAsync(x => x.UserId == user.Id);
-                authenticationModel.UserInfoId = (await _db.UserInformations.FirstOrDefaultAsync(x => x.UserId == user.Id))?.Id;
-                authenticationModel.CustomerId = customer?.Id;
-                authenticationModel.DriverId = driver?.Id;
-                authenticationModel.TransporterId = Convert.ToString(transporter?.Id);
-                authenticationModel.TransporterName = transporter?.CompanyName;
-                authenticationModel.DriverName = driver?.Name;
-                authenticationModel.CustomerName = customer?.CompanyName;
-                authenticationModel.FirstName = user.FirstName;
-                authenticationModel.LastName = user.LastName;
-                authenticationModel.UserId = user.Id;
-                authenticationModel.AppUserId = user.AppUserId;
-                authenticationModel.IsAuthenticated = true;
-                JwtSecurityToken jwtSecurityToken = await CreateJwtToken(user);
-                authenticationModel.Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
-                authenticationModel.Email = user.Email;
-                authenticationModel.UserName = user.UserName;
-                var rolesList = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
-                authenticationModel.Roles = rolesList.ToList();
-                return authenticationModel;
+                return await BuildAuthenticationViewModelAsync(user);
             }
+
             authenticationModel.IsAuthenticated = false;
             authenticationModel.Message = $"Incorrect Credentials for user {user.Email}.";
             return authenticationModel;
         }
+
         private async Task<JwtSecurityToken> CreateJwtToken(ApplicationUser user)
         {
             try
             {
                 var userClaims = await _userManager.GetClaimsAsync(user);
                 var roles = await _userManager.GetRolesAsync(user);
-                var roleClaims = new List<Claim>();
-                for (int i = 0; i < roles.Count; i++)
-                {
-                    roleClaims.Add(new Claim("roles", roles[i]));
-                }
+                var roleClaims = roles.Select(r => new Claim("roles", r));
+                
                 var claims = new[]
                 {
-                new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim("uid", user.Id)
-            }
-                .Union(userClaims)
-                .Union(roleClaims);
+                    new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                    new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                    new Claim("uid", user.Id)
+                }.Union(userClaims).Union(roleClaims);
+
                 var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwt.Key));
                 var signingCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
-                var jwtSecurityToken = new JwtSecurityToken(
+                
+                return new JwtSecurityToken(
                     issuer: _jwt.Issuer,
                     audience: _jwt.Audience,
                     claims: claims,
                     expires: DateTime.UtcNow.AddMinutes(_jwt.DurationInMinutes),
                     signingCredentials: signingCredentials);
-                return jwtSecurityToken;
             }
-            catch (Exception ex)
-            {
-                return null;
-            }
+            catch (Exception) { return null; }
         }
 
         public async Task<string> UpdateUserRoleAsync(RoleViewModel model)
         {
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
-            {
-                user = await _userManager.FindByNameAsync(model.Email);
-            }
+            var user = await FindByEmailAsync(model.Email) ?? await FindUserByUserName(model.Email);
             if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
             {
-                var roles = await _roleManager.FindByNameAsync(model.Name);
-                if (roles == null)
-                {
-                    await CreateRoles(model.Name);
-                }
-                if (roles != null)
-                {
-                    var userRoles = await _userManager.GetUsersInRoleAsync(model.Name);
-                    if (!userRoles.Any(x => x.Email == model.Email))
-                    {
-                        var roleList = new List<string> { model.Name };
-                        var userRole = await _userManager.AddToRoleAsync(user, model.Name);
-                    }
-                    return $"Added {model.Name} to user {model.Email}.";
-                }
-                return $"Role {model.Name} not found.";
+                await EnsureRoleAsync(user, model.Name);
+                return $"Added {model.Name} to user {model.Email}.";
             }
-            return $"Incorrect Credentials for user {user.Email}.";
+            return $"Incorrect Credentials or user not found.";
         }
-        public async Task<string> UpdateUserRolesAsync(RoleViewModel model)
-        {
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
-            {
-                user = await _userManager.FindByNameAsync(model.Email);
-            }
-            if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
-            {
-                var roles = await _roleManager.FindByNameAsync(model.Name);
-                if (roles == null)
-                {
-                    await CreateRoles(model.Name);
-                }
-                if (roles != null)
-                {
-                    var userRoles = await _userManager.GetUsersInRoleAsync(model.Name);
-                    if (!userRoles.Any(x => x.Email == model.Email))
-                    {
-                        var roleList = new List<string> { model.Name };
-                        //var userRole = await _userManager.AddToRolesAsync(user, roleList);
-                    }
-                    return $"Added {model.Name} to user {model.Email}.";
-                }
-                return $"Role {model.Name} not found.";
-            }
-            return $"Incorrect Credentials for user {user.Email}.";
-        }
+
+        // Back-compat with older controller/service usage. Currently identical to UpdateUserRoleAsync.
+        public Task<string> UpdateUserRolesAsync(RoleViewModel model) => UpdateUserRoleAsync(model);
+
         public async Task<string> CreateRoles(string roleName)
         {
-            var roles = await _roleManager.Roles.ToListAsync();
-            var roleExists = roles.Any(x => x.Name.ToLower() == roleName.ToLower());
-            if (!roleExists)
+            if (!await _roleManager.RoleExistsAsync(roleName))
             {
-                ApplicationRole role = new ApplicationRole { Name = roleName };
-                var saveRole = await _roleManager.CreateAsync(role);
+                await _roleManager.CreateAsync(new ApplicationRole { Name = roleName });
             }
             return "Success";
         }
 
-        public async Task<ApplicationRole> GetRoleAsync(string roleName)
-        {
-            return await _roleManager.FindByNameAsync(roleName);
-        }
-        public async Task<List<ApplicationRole>> GetRolesAsync(string roleName = "")
-        {
-            return await _roleManager.Roles.Where(x => string.IsNullOrEmpty(roleName) || x.Name.ToLower().Contains(roleName.ToLower())).ToListAsync();
-        }
+        public async Task<ApplicationRole> GetRoleAsync(string roleName) => await _roleManager.FindByNameAsync(roleName);
+        public async Task<List<ApplicationRole>> GetRolesAsync(string roleName = "") => 
+            await _roleManager.Roles.Where(x => string.IsNullOrEmpty(roleName) || x.Name.ToLower().Contains(roleName.ToLower())).ToListAsync();
 
         public async Task<AuthenticationViewModel> Login(LoginViewModel model)
         {
-            var user = await _userManager.FindByNameAsync(model.UserName);
-            if (user == null)
+            var user = await _userManager.FindByNameAsync(model.UserName) ?? await _userManager.FindByEmailAsync(model.Email);
+            if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
             {
-                user = await _userManager.FindByEmailAsync(model.Email);
-            }
-            if (user != null)
-            {
-                var passStatus = await _userManager.CheckPasswordAsync(user, model.Password);
-                if (passStatus)
-                {
-
-                    TokenRequestViewModel tokenModel = new TokenRequestViewModel() { Email = user.Email, UserName = model.UserName, Password = model.Password };
-                    var token = await GetTokenAsync(tokenModel);
-                    return token;
-                }
+                return await GetTokenAsync(new TokenRequestViewModel { Email = user.Email, Password = model.Password });
             }
             return new AuthenticationViewModel();
         }
-        public async Task<ApplicationUser> FindUserByUserName(string userName)
-        {
-            return await _userManager.FindByNameAsync(userName);
-        }
-        public async Task<ApplicationUser> FindUserByUserId(string userId)
-        {
-            return await _userManager.FindByIdAsync(userId);
-        }
-        public async Task<ApplicationUser> FindByEmailAsync(string email)
-        {
-            return await _userManager.FindByEmailAsync(email);
-        }
+
+        public async Task<ApplicationUser> FindUserByUserName(string userName) => await _userManager.FindByNameAsync(userName);
+        public async Task<ApplicationUser> FindUserByUserId(string userId) => await _userManager.FindByIdAsync(userId);
+        public async Task<ApplicationUser> FindByEmailAsync(string email) => await _userManager.FindByEmailAsync(email);
+
         public async Task<string> UpdateUser(UserViewModel model)
         {
-            var user = new ApplicationUser
-            {
-                UserName = model.UserName,
-                Email = model.Email,
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                PhoneNumber = model.PhoneNumber,
-                //  DOB = model.DOB,
-                NormalizedEmail = model.Email.ToUpper(),
-                NormalizedUserName = model.UserName.ToUpper(),
-            };
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null) return "Failed";
+            
+            user.FirstName = model.FirstName;
+            user.LastName = model.LastName;
+            user.PhoneNumber = model.PhoneNumber;
+            
             var updateResult = await _userManager.UpdateAsync(user);
-            if (updateResult.Succeeded) { return "Success"; } else { return "Failed"; }
+            return updateResult.Succeeded ? "Success" : "Failed";
         }
+
         public async Task<string> ChangePassword(UserViewModel model)
         {
-            var user = await FindByEmailAsync(model.Email);
-            if (user == null)
-            {
-                user = await FindByEmailAsync(model.UserName);
-            }
+            var user = await FindByEmailAsync(model.Email) ?? await FindByEmailAsync(model.UserName);
+            if (user == null) return "Failed";
             var updateResult = await _userManager.ChangePasswordAsync(user, model.Password, model.NewPassword);
-            if (updateResult.Succeeded) { return "Success"; } else { return "Failed"; }
+            return updateResult.Succeeded ? "Success" : "Failed";
         }
+
+        public async Task<string> LogoutAllDevices(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return "Failed";
+            var result = await _userManager.UpdateSecurityStampAsync(user);
+            return result.Succeeded ? "Success" : "Failed";
+        }
+
+        public async Task<string> DeleteAccount(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return "Failed";
+
+            user.IsActive = false;
+            user.IsEnabled = false;
+            user.LockoutEnabled = true;
+            user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded) return "Failed";
+
+            await _userManager.UpdateSecurityStampAsync(user);
+            return "Success";
+        }
+
         public async Task<ClaimsPrincipal> CreateAsync(ApplicationUser user)
         {
             var principal = await _userClaimFactory.CreateAsync(user);
             var claims = principal.Claims.ToList();
-            //claims = claims.Where(claim => _db.RequestedClaimTypes.Contains(claim.Type)).ToList();
 
-
-
-            if (user.Id != null)
-                claims.Add(new Claim(PropertyConstants.UserId, user.Id));
-
-            if (user.FirstName != null)
-                claims.Add(new Claim(PropertyConstants.FullName, user.FirstName));
-
-            //if (user.CreatedDateTime != null)
-            //    claims.Add(new Claim(PropertyConstants.CreatedDateTime, Convert.ToString(user.CreatedDateTime)));
-
-            if (user.AppUserId != null && user.AppUserId > 0)
-                claims.Add(new Claim(PropertyConstants.AppUserId, user.AppUserId.ToString()));
-
-            if (!string.IsNullOrEmpty(user.UserName))
-                claims.Add(new Claim(PropertyConstants.UserName, user.UserName.ToString()));
-            if (user.PhoneNumber != null)
-                claims.Add(new Claim(PropertyConstants.PhoneNumber, user.PhoneNumber));
-            if (user.Email != null)
-                claims.Add(new Claim(PropertyConstants.Email, user.Email));
-            //claims.Add(new Claim(PropertyConstants.CompanyId, Convert.ToString(companyId)));
-
-
+            if (user.Id != null) claims.Add(new Claim(PropertyConstants.UserId, user.Id));
+            if (user.FirstName != null) claims.Add(new Claim(PropertyConstants.FullName, user.FirstName));
+            if (user.AppUserId > 0) claims.Add(new Claim(PropertyConstants.AppUserId, user.AppUserId.ToString()));
+            if (!string.IsNullOrEmpty(user.UserName)) claims.Add(new Claim(PropertyConstants.UserName, user.UserName));
+            if (user.PhoneNumber != null) claims.Add(new Claim(PropertyConstants.PhoneNumber, user.PhoneNumber));
+            if (user.Email != null) claims.Add(new Claim(PropertyConstants.Email, user.Email));
 
             var roles = await _userManager.GetRolesAsync(user);
-            foreach (var role in roles)
-            {
-                claims.Add(new Claim("role", role));
-            }
+            foreach (var role in roles) claims.Add(new Claim("role", role));
+            
             return principal;
         }
 
         private async Task EnsureRoleAsync(ApplicationUser user, string roleName)
         {
-            if (string.IsNullOrWhiteSpace(roleName))
-            {
-                return;
-            }
-
+            if (string.IsNullOrWhiteSpace(roleName)) return;
             var normalizedRole = roleName.Trim();
-            var role = await _roleManager.FindByNameAsync(normalizedRole);
-            if (role == null)
-            {
-                await CreateRoles(normalizedRole);
-            }
-
+            if (!await _roleManager.RoleExistsAsync(normalizedRole)) await CreateRoles(normalizedRole);
             var currentRoles = await _userManager.GetRolesAsync(user);
             if (!currentRoles.Any(x => x.Equals(normalizedRole, StringComparison.OrdinalIgnoreCase)))
-            {
                 await _userManager.AddToRoleAsync(user, normalizedRole);
-            }
         }
 
         private async Task<ApplicationUser?> EnsureFirebaseLocalUserAsync(FirebaseVerifiedUser firebaseUser, FirebaseAuthRequestViewModel model, bool allowUnverifiedEmail)
         {
-            if (!allowUnverifiedEmail && !firebaseUser.EmailVerified)
-            {
-                return null;
-            }
-
+            if (!allowUnverifiedEmail && !firebaseUser.EmailVerified) return null;
             var user = await FindByEmailAsync(firebaseUser.Email);
             if (user == null)
             {
                 var userName = string.IsNullOrWhiteSpace(model.UserName) ? firebaseUser.Email : model.UserName.Trim().ToLowerInvariant();
+                if (!string.IsNullOrEmpty(model.PhoneNumber))
+                {
+                    var existingUserWithPhone = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == model.PhoneNumber);
+                    if (existingUserWithPhone != null) return null;
+                }
+
                 user = new ApplicationUser
                 {
                     UserName = userName,
@@ -460,32 +376,18 @@ namespace satguruApp.Service.Services
                     IsActive = true,
                     EmailConfirmed = firebaseUser.EmailVerified,
                 };
-
                 var createResult = await _userManager.CreateAsync(user, GenerateInternalPassword());
-                if (!createResult.Succeeded)
-                {
-                    return null;
-                }
+                if (!createResult.Succeeded) return null;
             }
             else
             {
-                if (!string.IsNullOrWhiteSpace(model.FirstName) || !string.IsNullOrWhiteSpace(firebaseUser.FirstName))
-                {
-                    user.FirstName = string.IsNullOrWhiteSpace(model.FirstName) ? firebaseUser.FirstName : model.FirstName;
-                }
-                if (!string.IsNullOrWhiteSpace(model.LastName) || !string.IsNullOrWhiteSpace(firebaseUser.LastName))
-                {
-                    user.LastName = string.IsNullOrWhiteSpace(model.LastName) ? firebaseUser.LastName : model.LastName;
-                }
-                if (!string.IsNullOrWhiteSpace(model.PhoneNumber))
-                {
-                    user.PhoneNumber = model.PhoneNumber;
-                }
+                user.FirstName = string.IsNullOrWhiteSpace(model.FirstName) ? firebaseUser.FirstName : model.FirstName;
+                user.LastName = string.IsNullOrWhiteSpace(model.LastName) ? firebaseUser.LastName : model.LastName;
+                user.PhoneNumber = model.PhoneNumber ?? user.PhoneNumber;
                 user.EmailConfirmed = firebaseUser.EmailVerified;
                 await _userManager.UpdateAsync(user);
             }
-
-            return await FindByEmailAsync(firebaseUser.Email);
+            return user;
         }
 
         private async Task<AuthenticationViewModel> BuildAuthenticationViewModelAsync(ApplicationUser user)
@@ -497,22 +399,17 @@ namespace satguruApp.Service.Services
 
             var rolesList = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
 
-            // Prioritize the role based on the AccountTypeId in UserInformation
             string resolvedRole = null;
             if (userInfo?.AccountTypeId != null)
             {
                 var accountType = await _db.AccountTypes.FirstOrDefaultAsync(a => a.Id == userInfo.AccountTypeId.Value);
-                if (accountType != null)
-                {
-                    resolvedRole = accountType.Name;
-                }
+                if (accountType != null) resolvedRole = accountType.Name;
             }
 
-            // Fallback to Identity Roles if AccountTypeId mapping failed or was missing
-            if (string.IsNullOrWhiteSpace(resolvedRole))
-            {
-                resolvedRole = rolesList.FirstOrDefault();
-            }
+            if (string.IsNullOrWhiteSpace(resolvedRole)) resolvedRole = rolesList.FirstOrDefault();
+
+            // SAFETY OVERRIDE: If the user has a Transporter record, prioritize that role for routing
+            if (transporterDetail != null) resolvedRole = "Transporter";
 
             var authenticationModel = new AuthenticationViewModel
             {
@@ -531,12 +428,14 @@ namespace satguruApp.Service.Services
                 Email = user.Email,
                 UserName = user.UserName,
                 EmailVerified = user.EmailConfirmed,
-                RoleName = resolvedRole
+                RoleName = resolvedRole,
+                Roles = rolesList.ToList()
             };
 
             JwtSecurityToken jwtSecurityToken = await CreateJwtToken(user);
-            authenticationModel.Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
-            authenticationModel.Roles = rolesList.ToList();
+            if (jwtSecurityToken != null)
+                authenticationModel.Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
+                
             return authenticationModel;
         }
 
@@ -561,6 +460,7 @@ namespace satguruApp.Service.Services
                 {
                     return null;
                 }
+
                 var fullName = decodedToken.Claims.TryGetValue("name", out var nameClaim)
                     ? nameClaim?.ToString() ?? string.Empty
                     : string.Empty;
@@ -577,8 +477,14 @@ namespace satguruApp.Service.Services
                     LastName = names.Length > 1 ? names[1] : string.Empty,
                 };
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(
+                    ex,
+                    "Firebase ID token verification failed. ProjectId: {ProjectId}. Current Server UTC Time: {CurrentTime}",
+                    _configuration["Firebase:ProjectId"],
+                    DateTime.UtcNow
+                );
                 return null;
             }
         }
@@ -588,6 +494,21 @@ namespace satguruApp.Service.Services
             var serviceAccountPath = FirebaseConfigurationHelper.ResolveServiceAccountPath(_configuration);
             if (string.IsNullOrWhiteSpace(serviceAccountPath))
             {
+                _logger.LogWarning(
+                    "Firebase Admin not configured: service account file not found. Configure Firebase:ServiceAccountPath (or FIREBASE_SERVICE_ACCOUNT_PATH). CurrentDirectory={CurrentDirectory} BaseDirectory={BaseDirectory}",
+                    Directory.GetCurrentDirectory(),
+                    AppContext.BaseDirectory
+                );
+                return null;
+            }
+
+            var projectId = _configuration["Firebase:ProjectId"];
+            if (string.IsNullOrWhiteSpace(projectId))
+            {
+                _logger.LogWarning(
+                    "Firebase Admin not configured: missing Firebase:ProjectId. ServiceAccountPath={ServiceAccountPath}",
+                    serviceAccountPath
+                );
                 return null;
             }
 
@@ -610,11 +531,10 @@ namespace satguruApp.Service.Services
                     _firebaseApp = FirebaseAdmin.FirebaseApp.Create(new FirebaseAdmin.AppOptions
                     {
                         Credential = Google.Apis.Auth.OAuth2.GoogleCredential.FromFile(serviceAccountPath),
-                        ProjectId = _configuration["Firebase:ProjectId"],
+                        ProjectId = projectId,
                     }, "navgatix-auth");
                 }
             }
-
             return FirebaseAdmin.Auth.FirebaseAuth.GetAuth(_firebaseApp);
         }
 
@@ -637,18 +557,20 @@ namespace satguruApp.Service.Services
         {
             var contactusEntity = new ContactU
             {
-                UserId = contactUs.UserId,
-                PhoneNumber = contactUs.PhoneNumber,
-                EmailId = contactUs.EmailId,
-                Description = contactUs.Description,
-                IsDeleted = false,
+                UserId = contactUs.UserId ?? string.Empty,
+                PhoneNumber = contactUs.PhoneNumber ?? string.Empty,
+                EmailId = contactUs.EmailId ?? string.Empty,
+                Description = contactUs.Description ?? string.Empty,
+                IsDeleted = contactUs.IsDeleted ?? false,
                 CreatedBy = contactUs.CreatedBy,
-                CreatedDatetime = DateTime.UtcNow,
+                CreatedDatetime = contactUs.CreatedDatetime ?? DateTime.UtcNow,
+                UpdatedBy = contactUs.UpdatedBy,
+                UpdatedDatetime = contactUs.UpdatedDatetime,
             };
+
             _db.ContactUs.Add(contactusEntity);
             await _db.SaveChangesAsync();
             return contactusEntity.Id;
         }
-
     }
 }

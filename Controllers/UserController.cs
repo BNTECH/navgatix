@@ -58,6 +58,10 @@ namespace navgatix.Controllers
             };
 
             var result = await _userService.UserRegisterAsync(userModel);
+            if (!result.StartsWith("User Registered"))
+            {
+                return BadRequest(result);
+            }
             //FileUpload fileUpload=Request.;
             AccountTypeViewModel accountTypeView = new AccountTypeViewModel { Name = model.RoleName };
 
@@ -77,7 +81,11 @@ namespace navgatix.Controllers
             var userResult = await _userInfoService.SaveAsync(model);
             switch (model?.RoleName?.ToLower())
             {
-                case "driver": await _transportService.SaveDriverAsync(new DriverViewModel { UserId = model.UserId, FirstName = model.FirstName, MiddleName = model.MiddleName, LastName = model.LastName, Mobile = model.Mobile, TransporterId = model.TransporterId, DOB = model.DOB, Gender = model.Gender, LicenseExpiry = model.LicenseExpiry, LicenseNumber = model.LicenseNumber, ProfilePic = model.ProfilePic }); break;
+                case "driver":
+                    if (model.TransporterId == 0)
+                    {
+                        model.TransporterId = await _transportService.SaveTransporterAsync(new TransporterViewModel { UserId = model.UserId, FirstName = model.FirstName, MiddleName = model.MiddleName, LastName = model.LastName, Mobile = model.Mobile, DOB = model.DOB, Gender = model.Gender, LicenseExpiry = model.LicenseExpiry, LicenseNumber = model.LicenseNumber, ProfilePic = model.ProfilePic, GSTNumber = model.GSTNumber, BankAccountNumber = model.BankAccountNumber, IFSCCode = model.IFSCCode, ProfileVerified = model.ProfileVerified });
+                    } await _transportService.SaveDriverAsync(new DriverViewModel { UserId = model.UserId, FirstName = model.FirstName, MiddleName = model.MiddleName, LastName = model.LastName, Mobile = model.Mobile, TransporterId = model.TransporterId, DOB = model.DOB, Gender = model.Gender, LicenseExpiry = model.LicenseExpiry, LicenseNumber = model.LicenseNumber, ProfilePic = model.ProfilePic }); break;
                 case "transporter": await _transportService.SaveTransporterAsync(new TransporterViewModel { UserId = model.UserId, FirstName = model.FirstName, MiddleName = model.MiddleName, LastName = model.LastName, Mobile = model.Mobile, DOB = model.DOB, Gender = model.Gender, LicenseExpiry = model.LicenseExpiry, LicenseNumber = model.LicenseNumber, ProfilePic = model.ProfilePic, GSTNumber = model.GSTNumber, BankAccountNumber = model.BankAccountNumber, IFSCCode = model.IFSCCode, ProfileVerified = model.ProfileVerified }); break;
                 case "customer":
                     await _appCustormer.SaveChangeAsync(new CustomerDetailViewModel { UserId = model.UserId, GSTNumber = model.GSTNumber, CompanyName = !string.IsNullOrEmpty(model.Company) ? model.Company : model.FirstName + " " + model.LastName, City = model.City, State = model.State, Pincode = model.Pincode, Address = model.Address });
@@ -134,6 +142,10 @@ namespace navgatix.Controllers
             };
 
             var userStatus = await _userService.UserRegisterAsync(userModel);
+            if (!userStatus.StartsWith("User Registered"))
+            {
+                return BadRequest(userStatus);
+            }
             var accountTypeView = new AccountTypeViewModel { Name = model.RoleName };
 
             var roles = await _accountTypeService.SaveChangeAsync(accountTypeView);
@@ -149,7 +161,7 @@ namespace navgatix.Controllers
             var userRoles = await _userService.UpdateUserRoleAsync(userRoleVM);
             string subPath = @"~/uploaddocs/";
 
-            var userResult = await _userInfoService.SaveAsync(new UserInfoViewModel { TransporterId = model.TransporterId, UserId = model.UserId, FirstName = model.FirstName, AccountTypeId = model.AccountTypeId, AppUserId = model.AppUserId.GetValueOrDefault(), AccountTypeName = model.AccountTypeName, Company = model.Company, DOB = model.DOB, Email = model.Email, GenderId = model.GenderId, FacebookLink = model.FacebookLink, PhoneNumber = model.PhoneNumber, LastName = model.LastName, LicenseExpiry = model.LicenseExpiry, LicenseNumber = model.LicenseNumber, MiddleName = model.MiddleName, Mobile = model.Mobile, Name = model.Name, IsOnline = model.IsOnline });
+            var userResult = await _userInfoService.SaveAsync(new UserInfoViewModel { TransporterId = model.TransporterId, UserId = model.UserId, FirstName = model.FirstName, AccountTypeId = model.AccountTypeId, AppUserId = model.AppUserId.GetValueOrDefault(), AccountTypeName = model.AccountTypeName, Company = model.Company, DOB = model.DOB, Email = model.Email, GenderId = model.GenderId, FacebookLink = model.FacebookLink, PhoneNumber = model.PhoneNumber, LastName = model.LastName, LicenseExpiry = model.LicenseExpiry, LicenseNumber = model.LicenseNumber, MiddleName = model.MiddleName, Mobile = model.Mobile, Name = model.Name });
             var result = await _transportService.SaveDriverAsync(model);
             return Ok(result);
         }
@@ -364,9 +376,15 @@ namespace navgatix.Controllers
         {
             model.RoleName = model?.RoleName?.ToLower() == "logistics" ? "customer" : model.RoleName;
             var result = await _userService.FirebaseRegisterAsync(model);
+
+            if (!result.IsAuthenticated && !string.IsNullOrEmpty(result.Message) && result.Message.Contains("already registered"))
+            {
+                return BadRequest(result.Message);
+            }
+
             if (string.IsNullOrWhiteSpace(result.UserId) || string.IsNullOrWhiteSpace(model.RoleName))
             {
-                return Ok();
+                return Ok(result);
             }
 
             var accountType = await _accountTypeService.GetById(0, model.RoleName);
@@ -520,7 +538,7 @@ namespace navgatix.Controllers
 
             return Ok(model);
         }
-        [HttpGet("changePassword")]
+        [HttpPost("changePassword")]
         [AllowAnonymous]
         public async Task<IActionResult> ChangePassword([FromBody] UserInfoViewModel userInfoView)
         {
@@ -535,8 +553,20 @@ namespace navgatix.Controllers
                 Password = userInfoView.Password,
                 NewPassword = userInfoView.NewPassword,
             };
-            var model = await _userService.UpdateUser(userModel);
-            return Ok(model);
+            var result = await _userService.ChangePassword(userModel);
+            return Ok(new { success = result == "Success", message = result });
+        }
+        [HttpPost("logoutAllDevices")]
+        public async Task<IActionResult> LogoutAllDevices([FromBody] string userId)
+        {
+            var result = await _userService.LogoutAllDevices(userId);
+            return Ok(new { success = result == "Success", message = result });
+        }
+        [HttpPost("deleteAccount")]
+        public async Task<IActionResult> DeleteAccount([FromBody] string userId)
+        {
+            var result = await _userService.DeleteAccount(userId);
+            return Ok(new { success = result == "Success", message = result });
         }
         [HttpPost("contactSupport")]
         [AllowAnonymous]

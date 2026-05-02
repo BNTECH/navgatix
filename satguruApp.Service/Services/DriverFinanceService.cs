@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using satguruApp.DLL.Models;
 using satguruApp.Service.Services.Interfaces;
 using satguruApp.Service.ViewModels;
@@ -195,6 +195,54 @@ namespace satguruApp.Service.Services
             payment.PaidAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
             return Success($"Withdrawal {payment.PaymentStatus}.", payment.Id, wallet.Balance ?? 0);
+        }
+        
+        public async Task<AccountStatementViewModel> GetAccountStatementAsync(string driverUserId)
+        {
+            var summary = await GetWalletSummaryAsync(driverUserId);
+            var statement = new AccountStatementViewModel
+            {
+                DriverUserId = driverUserId,
+                TotalEarnings = summary.TotalEarnings,
+                CurrentBalance = summary.CurrentBalance
+            };
+
+            var marker = DriverMarker(driverUserId);
+            var payments = await _db.Payments
+                .Where(x => x.IsDeleted != true && x.TransactionReference != null && x.TransactionReference.Contains(marker))
+                .OrderByDescending(x => x.PaidAt)
+                .ToListAsync();
+
+            foreach (var p in payments)
+            {
+                var type = p.PaymentMode == WithdrawalMode ? "Debit" : "Credit";
+                var description = p.PaymentMode == RidePaymentMode ? "Ride Payment" : 
+                                 p.PaymentMode == WithdrawalMode ? "Withdrawal" : "Payment";
+                
+                // Extract ride info or notes if possible
+                if (p.TransactionReference != null)
+                {
+                    var parts = p.TransactionReference.Split('|');
+                    var ridePart = parts.FirstOrDefault(x => x.StartsWith("RIDE:"));
+                    if (ridePart != null) description += $" (#{ridePart.Substring(5)})";
+                    
+                    var notePart = parts.FirstOrDefault(x => x.StartsWith("NOTE:"));
+                    if (notePart != null) description += $" - {notePart.Substring(5)}";
+                }
+
+                statement.Transactions.Add(new AccountStatementItemViewModel
+                {
+                    Id = p.Id,
+                    Date = p.PaidAt,
+                    Description = description,
+                    Amount = p.Amount ?? 0,
+                    Type = type,
+                    Status = p.PaymentStatus,
+                    Reference = p.TransactionReference
+                });
+            }
+
+            return statement;
         }
 
         private async Task<Wallet> EnsureWalletAsync(string userId)

@@ -55,6 +55,10 @@ namespace satguruApp.Service.ViewModels
         public string? PANCardUrl { get; set; }
         public string? ProfileStatus { get; set; }
         public bool? IsOnline { get; set; }
+        public string? Address { get; set; }
+        public string? Pincode { get; set; }
+        public string? BankAccountNumber { get; set; }
+        public string? IFSCCode { get; set; }
     }
     public class TransporterViewModel : DriverViewModel
     {
@@ -63,7 +67,6 @@ namespace satguruApp.Service.ViewModels
         public string? Address { get; set; }
         public string? Pincode { get; set; }
         public string? BankAccountNumber { get; set; }
-        public string? IFSCCode { get; set; }
         public bool? ProfileVerified { get; set; }
     }
 }

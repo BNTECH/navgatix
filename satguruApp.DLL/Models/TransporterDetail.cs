@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace satguruApp.DLL.Models;
@@ -24,7 +24,6 @@ public partial class TransporterDetail
     public string Pincode { get; set; }
 
     public string BankAccountNumber { get; set; }
-
     public string IFSCCode { get; set; }
 
     public bool? ProfileVerified { get; set; }

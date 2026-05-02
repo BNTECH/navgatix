@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -57,6 +57,7 @@ namespace satguruApp.DLL.Models
         public DateTime? CreatedDateTime { get; set; }
 
         public bool? IsActive { get; set; }
+        public bool IsDeleted { get; set; }
 
         public bool IsLockedOut => this.LockoutEnabled && this.LockoutEnd >= DateTimeOffset.UtcNow;
 
