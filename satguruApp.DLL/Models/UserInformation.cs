@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace satguruApp.DLL.Models;
@@ -48,7 +48,6 @@ public partial class UserInformation
     public DateTime? DOB { get; set; }
 
     public string Description { get; set; }
-
     public string ProfilePic { get; set; }
     public bool? IsOnline { get; set; }
 }

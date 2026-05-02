@@ -1,3 +1,4 @@
+using FirebaseAdmin.Auth;
 using Microsoft.EntityFrameworkCore;
 using satguruApp.DLL.Models;
 using satguruApp.Service.Services.Interfaces;
@@ -71,7 +72,7 @@ namespace satguruApp.Service.Services
             }
             return 0;
         }
-        public async Task<int> SaveTransporterAsync(TransporterViewModel transportInfo)
+        public async Task<long> SaveTransporterAsync(TransporterViewModel transportInfo)
         {
             var gender = await _db.Genders.Where(x => x.Name == transportInfo.Gender || x.Id == transportInfo.GenderId).FirstOrDefaultAsync();
             if (gender == null && !string.IsNullOrEmpty(transportInfo.Gender))
@@ -111,7 +112,8 @@ namespace satguruApp.Service.Services
                         transporter.IsDeleted = false;
                     }
                 }
-                return await _db.SaveChangesAsync();
+                 await _db.SaveChangesAsync();
+                return transporter.Id;
             }
             return 0;
 
@@ -149,7 +151,7 @@ namespace satguruApp.Service.Services
                               IFSCCode = transport.IFSCCode,
                               IsDeleted= transport.IsDeleted,
                               GSTNumber = transport.GSTNumber,
-                               ProfileVerified = transport.ProfileVerified
+                              ProfileVerified = transport.ProfileVerified
                           }).FirstOrDefaultAsync();
         }
 
@@ -449,22 +451,24 @@ namespace satguruApp.Service.Services
             var transporter = await _db.TransporterDetails.FirstOrDefaultAsync(t => t.UserId == userId);
             if (transporter == null) return new List<DriverViewModel>();
 
-            return await (from dvr in _db.Drivers
-                         join userInfo in _db.UserInformations on dvr.UserId equals userInfo.UserId
-                         where dvr.TransporterId == transporter.Id && dvr.IsDeleted != true
-                select new  DriverViewModel
-                {
-                    Id = dvr.Id,
-                    Name = dvr.Name,
-                    Phone = dvr.Phone,
-                    Mobile = !string.IsNullOrEmpty(dvr.Phone) ? long.Parse(new string(dvr.Phone.Where(char.IsDigit).Take(15).ToArray()) == "" ? "0" : new string(dvr.Phone.Where(char.IsDigit).Take(15).ToArray())) : 0,
-                    LicenseNumber = dvr.LicenseNumber,
-                    LicenseExpiry = dvr.LicenseExpiry,
-                    ProfilePic = dvr.PhotoUrl,
-                    ProfileStatus = dvr.ProfileStatus,
-                    IsOnline = userInfo.IsOnline,
-                    UserId = dvr.UserId
-                }).ToListAsync();
+            var drivers = await (from dvr in _db.Drivers
+                                join userInfo in _db.UserInformations on dvr.UserId equals userInfo.UserId
+                                where dvr.TransporterId == transporter.Id && dvr.IsDeleted != true
+                                select new { dvr, userInfo }).ToListAsync();
+
+            return drivers.Select(x => new DriverViewModel
+            {
+                Id = x.dvr.Id,
+                Name = x.dvr.Name,
+                Phone = x.dvr.Phone,
+                Mobile = !string.IsNullOrEmpty(x.dvr.Phone) ? long.Parse(new string(x.dvr.Phone.Where(char.IsDigit).Take(15).ToArray()) == "" ? "0" : new string(x.dvr.Phone.Where(char.IsDigit).Take(15).ToArray())) : 0,
+                LicenseNumber = x.dvr.LicenseNumber,
+                LicenseExpiry = x.dvr.LicenseExpiry,
+                ProfilePic = x.dvr.PhotoUrl,
+                ProfileStatus = x.dvr.ProfileStatus,
+                UserId = x.dvr.UserId,
+                IsOnline = x.userInfo.IsOnline,
+            }).ToList();
         }
 
         public async Task<List<VehicleViewModel>> GetVehiclesList(string userId)
@@ -495,6 +499,52 @@ namespace satguruApp.Service.Services
                 CurrentLongitude = v.CurrentLongitude,
                 IsDeleted = v.IsDeleted
             }).ToList();
+        }
+
+        public async Task<TransporterEarningsViewModel> GetTransporterEarningsAsync(string userId)
+        {
+            var transporter = await _db.TransporterDetails.FirstOrDefaultAsync(t => t.UserId == userId);
+            if (transporter == null) return new TransporterEarningsViewModel();
+
+            var vehicles = await _db.Vehicles.Where(v => v.TransporterId == transporter.Id && v.IsDeleted != true).Select(v => v.Id).ToListAsync();
+            
+            var completedBookings = await _db.Bookings
+                .Where(b => b.VehicleId.HasValue && vehicles.Contains(b.VehicleId.Value) && b.CT_BookingStatus == RideStatus.RideCompleted)
+                .ToListAsync();
+
+            var totalRevenue = completedBookings.Sum(b => b.FinalFare ?? b.EstimatedFare ?? 0);
+            
+            // Assuming 10% commission if not specified in booking
+            var commission = completedBookings.Sum(b => (b.FinalFare ?? b.EstimatedFare ?? 0) * 0.10m);
+
+            var result = new TransporterEarningsViewModel
+            {
+                TotalRevenue = totalRevenue,
+                CommissionPaid = commission,
+                NetEarnings = totalRevenue - commission
+            };
+
+            // Fetch payments (settlements) to the transporter
+            // Using a similar marker pattern as drivers but for transporters
+            var marker = $"TRANSPORTER_USER:{userId}";
+            var payments = await _db.Payments
+                .Where(x => x.IsDeleted != true && x.TransactionReference != null && x.TransactionReference.Contains(marker))
+                .OrderByDescending(x => x.PaidAt)
+                .ToListAsync();
+
+            foreach (var p in payments)
+            {
+                result.Settlements.Add(new TransporterSettlementViewModel
+                {
+                    Id = p.Id,
+                    Date = p.PaidAt ?? DateTime.MinValue,
+                    Amount = p.Amount ?? 0,
+                    Status = p.PaymentStatus,
+                    Reference = p.TransactionReference
+                });
+            }
+
+            return result;
         }
     }
 }

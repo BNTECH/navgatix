@@ -16,5 +16,6 @@ namespace satguruApp.Service.Services.Interfaces
         Task<List<UserInfoViewModel>> GetUserDetailList(UserSearchViewModel userSearch);
         Task<UserInfoViewModel> GetUserDetail(string userId);
         Task<int> UpdateProfilePic(string userId, string profilePic);
+        Task<UserInfoViewModel> AddUserInfoAsync(UserInfoViewModel userInfo);
     }
 }

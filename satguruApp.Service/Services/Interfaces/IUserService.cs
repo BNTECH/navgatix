@@ -1,4 +1,4 @@
-﻿using satguruApp.DLL.Models;
+using satguruApp.DLL.Models;
 using satguruApp.Service.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -25,6 +25,8 @@ namespace satguruApp.Service.Services.Interfaces
         Task<string> UpdateUserRolesAsync(RoleViewModel model);
         Task<string> UpdateUser(UserViewModel model);
         Task<string> ChangePassword(UserViewModel model);
+        Task<string> LogoutAllDevices(string userId);
+        Task<string> DeleteAccount(string userId);
         Task<int> SaveContactUsSupport(ContactUsViewModel contactUs);
     }
 }

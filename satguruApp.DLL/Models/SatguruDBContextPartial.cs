@@ -26,6 +26,7 @@ namespace satguruApp.DLL.Models
             modelBuilder.Entity<ApplicationUser>().Property(p => p.LockoutEnd).HasColumnName("LockoutEndDateUtc");
             modelBuilder.Entity<ApplicationUser>().Property(p => p.AppUserId).ValueGeneratedOnAdd();
             modelBuilder.Entity<ApplicationUser>().Property(p => p.AppUserId).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+            modelBuilder.Entity<ApplicationUser>().Ignore(p => p.IsDeleted);
 
 
             modelBuilder.Entity<ApplicationUser>().ToTable("Users");

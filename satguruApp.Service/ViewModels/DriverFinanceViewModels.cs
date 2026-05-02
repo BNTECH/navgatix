@@ -41,4 +41,23 @@ namespace satguruApp.Service.ViewModels
         public Guid? PaymentId { get; set; }
         public decimal? UpdatedBalance { get; set; }
     }
+
+    public class AccountStatementViewModel
+    {
+        public string? DriverUserId { get; set; }
+        public decimal TotalEarnings { get; set; }
+        public decimal CurrentBalance { get; set; }
+        public List<AccountStatementItemViewModel> Transactions { get; set; } = new();
+    }
+
+    public class AccountStatementItemViewModel
+    {
+        public Guid Id { get; set; }
+        public DateTime? Date { get; set; }
+        public string? Description { get; set; }
+        public decimal Amount { get; set; }
+        public string? Type { get; set; } // Credit | Debit
+        public string? Status { get; set; }
+        public string? Reference { get; set; }
+    }
 }

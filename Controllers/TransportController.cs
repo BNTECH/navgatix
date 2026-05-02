@@ -63,5 +63,12 @@ namespace navgatix.Controllers
             if (string.IsNullOrEmpty(userId)) return BadRequest("UserId is required.");
             return Ok(await _transportService.GetVehiclesList(userId));
         }
+
+        [HttpGet("getTransporterEarnings")]
+        public async Task<IActionResult> GetTransporterEarnings(string userId)
+        {
+            if (string.IsNullOrEmpty(userId)) return BadRequest("UserId is required.");
+            return Ok(await _transportService.GetTransporterEarningsAsync(userId));
+        }
     }
 }

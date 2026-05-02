@@ -44,5 +44,12 @@ namespace navgatix.Controllers
         {
             return Ok(await _driverFinanceService.ProcessWithdrawalAsync(model));
         }
+
+        [HttpGet("statement/{driverUserId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetStatement(string driverUserId)
+        {
+            return Ok(await _driverFinanceService.GetAccountStatementAsync(driverUserId));
+        }
     }
 }

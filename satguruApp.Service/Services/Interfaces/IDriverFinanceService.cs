@@ -10,5 +10,6 @@ namespace satguruApp.Service.Services.Interfaces
         Task<DriverFinanceResultViewModel> RecordRidePaymentAsync(RidePaymentRequestViewModel model);
         Task<DriverFinanceResultViewModel> RequestWithdrawalAsync(WithdrawalRequestViewModel model);
         Task<DriverFinanceResultViewModel> ProcessWithdrawalAsync(WithdrawalActionViewModel model);
+        Task<AccountStatementViewModel> GetAccountStatementAsync(string driverUserId);
     }
 }

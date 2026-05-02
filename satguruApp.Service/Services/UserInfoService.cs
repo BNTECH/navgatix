@@ -1,3 +1,4 @@
+using FirebaseAdmin.Messaging;
 using Microsoft.EntityFrameworkCore;
 using satguruApp.DLL.Models;
 using satguruApp.Service.Services.Interfaces;
@@ -15,6 +16,77 @@ namespace satguruApp.Service.Services
         public UserInfoService(SatguruDBContext context) : base(context)
         { }
         private SatguruDBContext _db => (SatguruDBContext)_context;
+
+        public async Task<UserInfoViewModel> AddUserInfoAsync(UserInfoViewModel userInfo)
+        {
+            if (userInfo == null || string.IsNullOrWhiteSpace(userInfo.UserId))
+            {
+                return userInfo;
+            }
+
+            var gender = await _db.Genders.Where(x => x.Name == userInfo.Gender || x.Id == userInfo.GenderId).FirstOrDefaultAsync();
+            if (gender == null && !string.IsNullOrEmpty(userInfo.Gender))
+            {
+                gender = new Gender();
+                gender.Name = userInfo.Gender;
+                gender.IsDeleted = false;
+                _db.Genders.Add(gender);
+                await _db.SaveChangesAsync();
+            }
+            if (gender != null)
+            {
+                userInfo.GenderId = gender.Id;
+            }
+
+            var usrInfo = await _db.UserInformations.FirstOrDefaultAsync(x =>
+                (userInfo.Id.HasValue && userInfo.Id != Guid.Empty && x.Id == userInfo.Id.Value) ||
+                x.UserId == userInfo.UserId ||
+                (!string.IsNullOrWhiteSpace(userInfo.Email) && x.Email.ToLower() == userInfo.Email.ToLower()) ||
+                (!string.IsNullOrWhiteSpace(userInfo.PhoneNumber) && x.PhoneNumber == userInfo.PhoneNumber) ||
+                (userInfo.Mobile.HasValue && x.Mobile == userInfo.Mobile.Value));
+
+            if (usrInfo != null)
+            {
+                userInfo.Message = "User Exists already!, please check carefully";
+                return userInfo;
+            }
+
+            var isNewRecord = usrInfo == null;
+            var target = usrInfo ?? new UserInformation
+            {
+                Id = (userInfo.Id.HasValue && userInfo.Id.Value != Guid.Empty) ? userInfo.Id.Value : Guid.NewGuid(),
+                UserId = userInfo.UserId,
+                CreatedDate = DateTime.UtcNow
+            };
+
+
+            target.FirstName = userInfo.FirstName ?? target.FirstName;
+            target.LastName = userInfo.LastName ?? target.LastName;
+            target.Email = userInfo.Email ?? target.Email;
+            target.MiddleName = userInfo.MiddleName ?? target.MiddleName ?? string.Empty;
+            target.Mobile = userInfo.Mobile ?? target.Mobile;
+            target.PhoneNumber = userInfo.PhoneNumber ?? target.PhoneNumber;
+            target.FacebookLink = userInfo.FacebookLink ?? target.FacebookLink;
+            target.InstagramLink = userInfo.InstagramLink ?? target.InstagramLink;
+            target.WhatsAppLink = userInfo.WhatsAppLink ?? target.WhatsAppLink;
+            target.AccountTypeId = userInfo.AccountTypeId ?? target.AccountTypeId;
+            target.Company = userInfo.Company ?? target.Company;
+            target.DOB = userInfo.DOB ?? target.DOB;
+            target.GenderId = userInfo.GenderId ?? target.GenderId;
+            target.Description = userInfo.Description ?? target.Description;
+            target.ProfilePic = userInfo.ProfilePic ?? target.ProfilePic;
+            target.IsDeleted = false;
+            target.UpdatedDate = DateTime.UtcNow;
+
+            if (isNewRecord)
+            {
+                _db.UserInformations.Add(target);
+            }
+
+            await _db.SaveChangesAsync();
+            userInfo.Id = target.Id;
+            return userInfo;
+        }
         public async Task<UserInfoViewModel> SaveAsync(UserInfoViewModel userInfo)
         {
             if (userInfo == null || string.IsNullOrWhiteSpace(userInfo.UserId))
@@ -39,7 +111,7 @@ namespace satguruApp.Service.Services
             var usrInfo = await _db.UserInformations.FirstOrDefaultAsync(x =>
                 (userInfo.Id.HasValue && userInfo.Id != Guid.Empty && x.Id == userInfo.Id.Value) ||
                 x.UserId == userInfo.UserId ||
-                (!string.IsNullOrWhiteSpace(userInfo.Email) && x.Email == userInfo.Email) ||
+                (!string.IsNullOrWhiteSpace(userInfo.Email) && x.Email.ToLower() == userInfo.Email.ToLower()) ||
                 (!string.IsNullOrWhiteSpace(userInfo.PhoneNumber) && x.PhoneNumber == userInfo.PhoneNumber) ||
                 (userInfo.Mobile.HasValue && x.Mobile == userInfo.Mobile.Value));
 
@@ -67,7 +139,6 @@ namespace satguruApp.Service.Services
             target.Description = userInfo.Description ?? target.Description;
             target.ProfilePic = userInfo.ProfilePic ?? target.ProfilePic;
             target.IsDeleted = false;
-            target.IsOnline = userInfo.IsOnline;
             target.UpdatedDate = DateTime.UtcNow;
 
             if (isNewRecord)
