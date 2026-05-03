@@ -16,5 +16,7 @@ namespace satguruApp.Service.ViewModels
         public DateTime? DOB { get; set; }
         public string? Provider { get; set; }
         public bool? IsOnline { get; set; }
+        public long ? TransporterId { get; set; }
+        public string? Message { get; set; }
     }
 }
