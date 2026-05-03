@@ -78,14 +78,20 @@ namespace navgatix.Controllers
             var userRoles = await _userService.UpdateUserRoleAsync(userRoleVM);
 
             //Helpers.FileUploadExtension.SaveAs(fileUpload, subPath, true, fileUpload);
-            var userResult = await _userInfoService.SaveAsync(model);
+            var userResult = await _userInfoService.AddUserInfoAsync(model);
+            if (!string.IsNullOrEmpty(userResult.Message))
+            {
+                model.Message = userResult.Message;
+                return Ok(model);
+            }
             switch (model.RoleName.ToLower())
             {
                 case "driver":
                     if (model.TransporterId == 0)
                     {
                         model.TransporterId = await _transportService.SaveTransporterAsync(new TransporterViewModel { UserId = model.UserId, FirstName = model.FirstName, MiddleName = model.MiddleName, LastName = model.LastName, Mobile = model.Mobile, DOB = model.DOB, Gender = model.Gender, LicenseExpiry = model.LicenseExpiry, LicenseNumber = model.LicenseNumber, ProfilePic = model.ProfilePic, GSTNumber = model.GSTNumber, BankAccountNumber = model.BankAccountNumber, IFSCCode = model.IFSCCode, ProfileVerified = model.ProfileVerified });
-                    } await _transportService.SaveDriverAsync(new DriverViewModel { UserId = model.UserId, FirstName = model.FirstName, MiddleName = model.MiddleName, LastName = model.LastName, Mobile = model.Mobile, TransporterId = model.TransporterId, DOB = model.DOB, Gender = model.Gender, LicenseExpiry = model.LicenseExpiry, LicenseNumber = model.LicenseNumber, ProfilePic = model.ProfilePic }); break;
+                    }
+                    await _transportService.SaveDriverAsync(new DriverViewModel { UserId = model.UserId, FirstName = model.FirstName, MiddleName = model.MiddleName, LastName = model.LastName, Mobile = model.Mobile, TransporterId = model.TransporterId, DOB = model.DOB, Gender = model.Gender, LicenseExpiry = model.LicenseExpiry, LicenseNumber = model.LicenseNumber, ProfilePic = model.ProfilePic }); break;
                 case "transporter": await _transportService.SaveTransporterAsync(new TransporterViewModel { UserId = model.UserId, FirstName = model.FirstName, MiddleName = model.MiddleName, LastName = model.LastName, Mobile = model.Mobile, DOB = model.DOB, Gender = model.Gender, LicenseExpiry = model.LicenseExpiry, LicenseNumber = model.LicenseNumber, ProfilePic = model.ProfilePic, GSTNumber = model.GSTNumber, BankAccountNumber = model.BankAccountNumber, IFSCCode = model.IFSCCode, ProfileVerified = model.ProfileVerified }); break;
                 case "customer":
                     await _appCustormer.SaveChangeAsync(new CustomerDetailViewModel { UserId = model.UserId, GSTNumber = model.GSTNumber, CompanyName = !string.IsNullOrEmpty(model.Company) ? model.Company : model.FirstName + " " + model.LastName, City = model.City, State = model.State, Pincode = model.Pincode, Address = model.Address });
@@ -174,14 +180,14 @@ namespace navgatix.Controllers
             if (user == null) return NotFound("User not found");
 
             // Update Identity User basic details
-            await _userService.UpdateUser(new UserViewModel 
-            { 
-                UserName = user.UserName, 
-                Email = user.Email, 
-                FirstName = model.FirstName ?? user.FirstName, 
-                LastName = model.LastName ?? user.LastName, 
-                PhoneNumber = model.PhoneNumber ?? user.PhoneNumber, 
-                DOB = model.DOB 
+            await _userService.UpdateUser(new UserViewModel
+            {
+                UserName = user.UserName,
+                Email = user.Email,
+                FirstName = model.FirstName ?? user.FirstName,
+                LastName = model.LastName ?? user.LastName,
+                PhoneNumber = model.PhoneNumber ?? user.PhoneNumber,
+                DOB = model.DOB
             });
 
             // Update UserInformation (Personal Profile)
@@ -225,7 +231,7 @@ namespace navgatix.Controllers
             // Mandatory Field Validation for Profile Completion
             bool isLicensePresent = !string.IsNullOrEmpty(model.LicenseNumber);
             bool isVehiclePresent = !string.IsNullOrEmpty(model.VehicleNumber) && !string.IsNullOrEmpty(model.VehicleName);
-            
+
             var kycRecords = await _transportService.GetDriverKYCAsync(driverId);
             bool isAadhaarDone = kycRecords.Any(x => x.DocumentType == "Aadhaar");
 
@@ -236,7 +242,7 @@ namespace navgatix.Controllers
             else
             {
                 await _transportService.UpdateProfileStatusAsync(driverId, "Incomplete");
-                
+
                 // If this was an explicit finalize attempt, return errors
                 if (model.Status == "Finalizing")
                 {
@@ -263,13 +269,13 @@ namespace navgatix.Controllers
             var firstName = names?.Length > 0 ? names[0] : user.FirstName;
             var lastName = names?.Length > 1 ? string.Join(" ", names.Skip(1)) : user.LastName;
 
-            await _userService.UpdateUser(new UserViewModel 
-            { 
-                UserName = user.UserName, 
-                Email = user.Email, 
-                FirstName = firstName, 
-                LastName = lastName, 
-                PhoneNumber = model.Phone ?? user.PhoneNumber 
+            await _userService.UpdateUser(new UserViewModel
+            {
+                UserName = user.UserName,
+                Email = user.Email,
+                FirstName = firstName,
+                LastName = lastName,
+                PhoneNumber = model.Phone ?? user.PhoneNumber
             });
 
             // Update UserInformation
@@ -303,14 +309,14 @@ namespace navgatix.Controllers
             var user = await _userService.FindUserByUserId(model.UserId);
             if (user == null) return NotFound("User not found");
 
-            await _userService.UpdateUser(new UserViewModel 
-            { 
-                UserName = user.UserName, 
-                Email = user.Email, 
-                FirstName = model.FirstName ?? user.FirstName, 
-                LastName = model.LastName ?? user.LastName, 
-                PhoneNumber = model.PhoneNumber ?? user.PhoneNumber, 
-                DOB = model.DOB 
+            await _userService.UpdateUser(new UserViewModel
+            {
+                UserName = user.UserName,
+                Email = user.Email,
+                FirstName = model.FirstName ?? user.FirstName,
+                LastName = model.LastName ?? user.LastName,
+                PhoneNumber = model.PhoneNumber ?? user.PhoneNumber,
+                DOB = model.DOB
             });
 
             var result = await _transportService.SaveTransporterAsync(model);
@@ -402,10 +408,15 @@ namespace navgatix.Controllers
                 GSTNumber = model.GSTNumber,
                 DOB = model.DOB,
                 AppUserId = result.AppUserId ?? 0,
-                IsOnline = model    .IsOnline
+                IsOnline = model.IsOnline
             };
-
-            await _userInfoService.SaveAsync(userInfoModel);
+           
+            var userResult = await _userInfoService.AddUserInfoAsync(userInfoModel);
+            if (!string.IsNullOrEmpty(userResult.Message))
+            {
+                model.Message = userResult.Message;
+                return Ok(model);
+            }
 
             if (!result.IsAuthenticated && !result.EmailVerified)
             {
@@ -580,11 +591,13 @@ namespace navgatix.Controllers
 
         private async Task SyncFirebaseProfileAsync(FirebaseAuthRequestViewModel model, AuthenticationViewModel authResult)
         {
-            
-
-            switch (model.RoleName)
+            switch (model.RoleName.ToLower())
             {
-                case "Driver":
+                case "driver":
+                    if (model.TransporterId == 0)
+                    {
+                        model.TransporterId = await _transportService.SaveTransporterAsync(new TransporterViewModel { UserId = authResult.UserId, FirstName = model.FirstName,  LastName = model.LastName,  DOB = model.DOB, GSTNumber = model.GSTNumber });
+                    }
                     await _transportService.SaveDriverAsync(new DriverViewModel
                     {
                         UserId = authResult.UserId,
@@ -593,7 +606,7 @@ namespace navgatix.Controllers
                         PhoneNumber = model.PhoneNumber,
                     });
                     break;
-                case "Transporter":
+                case "transporter":
                     await _transportService.SaveTransporterAsync(new TransporterViewModel
                     {
                         UserId = authResult.UserId,
@@ -604,8 +617,8 @@ namespace navgatix.Controllers
                         CompanyName = model.Company,
                     });
                     break;
-                case "Logistics":
-                case "Customer":
+                case "logistics":
+                case "customer":
                     await _appCustormer.SaveChangeAsync(new CustomerDetailViewModel
                     {
                         UserId = authResult.UserId,
