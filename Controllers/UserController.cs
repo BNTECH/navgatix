@@ -87,7 +87,7 @@ namespace navgatix.Controllers
             switch (model?.RoleName?.ToLower())
             {
                 case "driver":
-                    if (model.TransporterId == 0)
+                    if (model.TransporterId == 0 || !model.TransporterId.HasValue)
                     {
                         model.TransporterId = await _transportService.SaveTransporterAsync(new TransporterViewModel { UserId = model.UserId, FirstName = model.FirstName, MiddleName = model.MiddleName, LastName = model.LastName, Mobile = model.Mobile, DOB = model.DOB, Gender = model.Gender, LicenseExpiry = model.LicenseExpiry, LicenseNumber = model.LicenseNumber, ProfilePic = model.ProfilePic, GSTNumber = model.GSTNumber, BankAccountNumber = model.BankAccountNumber, IFSCCode = model.IFSCCode, ProfileVerified = model.ProfileVerified });
                     }
