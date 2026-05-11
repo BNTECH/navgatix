@@ -107,7 +107,7 @@ namespace satguruApp.Service.ViewModels
         public int? CTTyreType { get; set; }
         public string? Message { get; set; }
 
-        public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
-        public virtual VehicleViewModel Vehicle { get; set; }
+        public virtual ICollection<Payment>? Payments { get; set; } = new List<Payment>();
+        public virtual VehicleViewModel? Vehicle { get; set; }
     }
 }
