@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import LandingPage from './pages/LandingPage';
 import Login from './pages/auth/LoginPage';
 import Register from './pages/auth/RegisterPage';
+import TransporterDashboard from './pages/transporter/TransporterDashboard';
 import DriverDashboard from './pages/driver/DriverDashboard';
 import ProfilePage from './pages/ProfilePage';
 import AboutUsPage from './pages/AboutUsPage';
@@ -32,9 +33,10 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
 
           {/* Dashboards (often have their own sidebar/navbar) */}
-          <Route path="/driver-dashboard" element={<><Navbar /><DriverDashboard /></>} />
-          <Route path="/customer-dashboard" element={<><Navbar /><CustomerDashboard /></>} />
-          <Route path="/customer-portal" element={<><Navbar /><CustomerDashboard /></>} />
+          <Route path="/transporter-dashboard" element={<TransporterDashboard />} />
+          <Route path="/driver-dashboard" element={<DriverDashboard />} />
+          <Route path="/customer-dashboard" element={<CustomerDashboard />} />
+          <Route path="/customer-portal" element={<CustomerDashboard />} />
 
           {/* Catch all redirect to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
